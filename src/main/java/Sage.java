@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 public class Sage {
     public static void main(String[] args) {
         String line = "____________________________________________________________";
@@ -12,7 +14,18 @@ public class Sage {
         System.out.println("Hello! I'm Sage.");
         System.out.println("What can I do for you?");
         System.out.println(line);
-        System.out.println("Bye. Hope to see you again soon!");
-        System.out.println(line);
+
+        Scanner scanner = new Scanner(System.in);
+        while (scanner.hasNextLine()) {
+            String input = scanner.nextLine();
+            System.out.println(line);
+            if ("bye".equals(input)) {
+                System.out.println("Bye. Hope to see you again soon!");
+                System.out.println(line);
+                break;
+            }
+            System.out.println(input);
+            System.out.println(line);
+        }
     }
 }
