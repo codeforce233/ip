@@ -43,6 +43,18 @@ class TaskListTest {
     }
 
     @Test
+    void findReturnsCaseInsensitiveMatches() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Task("read book", TaskType.TODO));
+        tasks.add(new Task("return book", TaskType.TODO));
+        tasks.add(new Task("write report", TaskType.TODO));
+
+        assertEquals(2, tasks.find("BOOK").size());
+        assertEquals("read book", tasks.find("book").get(0).getDescription());
+        assertEquals("return book", tasks.find("book").get(1).getDescription());
+    }
+
+    @Test
     void addBeyondLimitThrowsIllegalStateException() {
         TaskList tasks = new TaskList();
 

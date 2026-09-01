@@ -39,6 +39,10 @@ class UiTest {
         assertTrue(listOutput.contains("Here are the tasks in your list:"));
         assertTrue(listOutput.contains("watch lecture"));
 
+        String matchedOutput = captureOutput(() -> ui.showMatchingTasks(List.of(task)));
+        assertTrue(matchedOutput.contains("Here are the matching tasks in your list:"));
+        assertTrue(matchedOutput.contains("watch lecture"));
+
         String addedOutput = captureOutput(() -> ui.showAddedTask(task, 1));
         assertTrue(addedOutput.contains("Got it. I've added this task:"));
 

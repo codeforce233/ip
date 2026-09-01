@@ -97,6 +97,29 @@ class CommandTest {
         assertTrue(new ExitCommand().isExit());
     }
 
+    @Test
+    void findCommand_filtersTasksCaseInsensitive() throws SageException {
+        TaskList tasks = new TaskList();
+        Storage storage = new Storage(tempDir.resolve("tasks.txt").toString());
+        Ui ui = new Ui();
+        tasks.add(new Todo("read book"));
+        tasks.add(new Todo("return book"));
+        tasks.add(new Todo("write report"));
+
+        String output = captureOutput(() -> {
+            try {
+                new FindCommand("BOOK").execute(tasks, ui, storage);
+            } catch (SageException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertTrue(output.contains("Here are the matching tasks in your list:"));
+        assertTrue(output.contains("read book"));
+        assertTrue(output.contains("return book"));
+        assertTrue(output.contains("write report") == false);
+    }
+
     private String captureOutput(Runnable action) {
         PrintStream originalOut = System.out;
         ByteArrayOutputStream captured = new ByteArrayOutputStream();
