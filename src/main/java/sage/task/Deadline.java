@@ -7,6 +7,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
+/**
+ * Represents a task that must be done by a specific date and time.
+ */
 public class Deadline extends Task {
     protected LocalDateTime by;
     protected String byText;
@@ -21,26 +24,54 @@ public class Deadline extends Task {
             DateTimeFormatter.ofPattern("yyyy-MM-dd")
     );
 
+    /**
+     * Creates a deadline from a user-provided date string.
+     *
+     * @param description the task description
+     * @param by the deadline value as text
+     */
     public Deadline(String description, String by) {
         super(description, TaskType.DEADLINE);
         this.byText = by == null ? "" : by.trim();
         this.by = parseDateTime(this.byText);
     }
 
+    /**
+     * Creates a deadline from a Java LocalDateTime value.
+     *
+     * @param description the task description
+     * @param by the deadline time
+     */
     public Deadline(String description, LocalDateTime by) {
         super(description, TaskType.DEADLINE);
         this.by = by;
         this.byText = by == null ? "" : by.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
+    /**
+     * Returns the parsed due date and time.
+     *
+     * @return the deadline timestamp, or null if parsing failed
+     */
     public LocalDateTime getBy() {
         return by;
     }
 
+    /**
+     * Returns the original text used to parse the deadline.
+     *
+     * @return the raw deadline string
+     */
     public String getByText() {
         return byText;
     }
 
+    /**
+     * Parses a date or date-time string into a LocalDateTime value.
+     *
+     * @param rawValue the user-entered deadline text
+     * @return the parsed time, or null if the input is not in a supported format
+     */
     public static LocalDateTime parseDateTime(String rawValue) {
         String value = rawValue == null ? "" : rawValue.trim();
         if (value.isEmpty()) {
@@ -67,6 +98,11 @@ public class Deadline extends Task {
         }
     }
 
+    /**
+     * Formats the internal deadline value for display in the UI.
+     *
+     * @return the formatted deadline text
+     */
     private String formatBy() {
         if (by == null) {
             return byText;
@@ -77,6 +113,11 @@ public class Deadline extends Task {
         return by.format(DISPLAY_FORMATTER);
     }
 
+    /**
+     * Formats the task as a string suitable for terminal display.
+     *
+     * @return the user-facing description of the deadline task
+     */
     @Override
     public String toString() {
         return "[" + type.getSymbol() + "][" + getStatusIcon() + "] " + description + " (by: " + formatBy() + ")";

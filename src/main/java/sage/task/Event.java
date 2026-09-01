@@ -7,6 +7,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
+/**
+ * Represents a task that spans a start time and an end time.
+ */
 public class Event extends Task {
     protected LocalDateTime from;
     protected LocalDateTime to;
@@ -23,6 +26,13 @@ public class Event extends Task {
             DateTimeFormatter.ofPattern("yyyy-MM-dd")
     );
 
+    /**
+     * Creates an event from raw text for its start and end times.
+     *
+     * @param description the event description
+     * @param from the start time text
+     * @param to the end time text
+     */
     public Event(String description, String from, String to) {
         super(description, TaskType.EVENT);
         this.fromText = from == null ? "" : from.trim();
@@ -31,6 +41,13 @@ public class Event extends Task {
         this.to = parseDateTime(this.toText);
     }
 
+    /**
+     * Creates an event from LocalDateTime instances.
+     *
+     * @param description the event description
+     * @param from the starting date-time
+     * @param to the ending date-time
+     */
     public Event(String description, LocalDateTime from, LocalDateTime to) {
         super(description, TaskType.EVENT);
         this.from = from;
@@ -39,22 +56,48 @@ public class Event extends Task {
         this.toText = to == null ? "" : to.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
+    /**
+     * Returns the starting date-time for the event.
+     *
+     * @return the start time or null if not parsed
+     */
     public LocalDateTime getFrom() {
         return from;
     }
 
+    /**
+     * Returns the ending date-time for the event.
+     *
+     * @return the end time or null if not parsed
+     */
     public LocalDateTime getTo() {
         return to;
     }
 
+    /**
+     * Returns the original start text.
+     *
+     * @return the raw start text
+     */
     public String getFromText() {
         return fromText;
     }
 
+    /**
+     * Returns the original end text.
+     *
+     * @return the raw end text
+     */
     public String getToText() {
         return toText;
     }
 
+    /**
+     * Parses a date or date-time string into a LocalDateTime value.
+     *
+     * @param rawValue the user-entered time text
+     * @return the parsed time, or null if the input is not in a supported format
+     */
     public static LocalDateTime parseDateTime(String rawValue) {
         String value = rawValue == null ? "" : rawValue.trim();
         if (value.isEmpty()) {
@@ -81,6 +124,12 @@ public class Event extends Task {
         }
     }
 
+    /**
+     * Formats a date-time for terminal display.
+     *
+     * @param dateTime the value to format
+     * @return the formatted display string
+     */
     private String formatDateTime(LocalDateTime dateTime) {
         if (dateTime == null) {
             return "";
@@ -91,6 +140,11 @@ public class Event extends Task {
         return dateTime.format(DISPLAY_FORMATTER);
     }
 
+    /**
+     * Formats the event as a user-facing string summary.
+     *
+     * @return the formatted event description for display
+     */
     @Override
     public String toString() {
         return "[" + type.getSymbol() + "][" + getStatusIcon() + "] " + description

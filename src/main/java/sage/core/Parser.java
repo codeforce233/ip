@@ -12,7 +12,17 @@ import sage.task.Deadline;
 import sage.task.Event;
 import sage.task.Todo;
 
+/**
+ * Converts raw user input into concrete command objects.
+ */
 public class Parser {
+    /**
+     * Parses a full command string into a command instance.
+     *
+     * @param fullCommand the user-entered command text
+     * @return the corresponding command object
+     * @throws SageException if the command is empty or malformed
+     */
     public static Command parse(String fullCommand) throws SageException {
         if (fullCommand == null || fullCommand.trim().isEmpty()) {
             throw new SageException("I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, delete, or bye.");
@@ -96,6 +106,13 @@ public class Parser {
         throw new SageException("I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, delete, or bye.");
     }
 
+    /**
+     * Parses a task index from user input.
+     *
+     * @param text the numeric text entered by the user
+     * @return the parsed task number
+     * @throws SageException if the text is not a valid integer
+     */
     private static int parseIndex(String text) throws SageException {
         try {
             return Integer.parseInt(text);

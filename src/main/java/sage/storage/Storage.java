@@ -15,13 +15,26 @@ import sage.task.Event;
 import sage.task.Task;
 import sage.task.Todo;
 
+/**
+ * Loads and saves the task list to a text file on disk.
+ */
 public class Storage {
     private final Path filePath;
 
+    /**
+     * Creates a storage object for the given file path.
+     *
+     * @param filePath the location of the serialized task data
+     */
     public Storage(String filePath) {
         this.filePath = Paths.get(filePath);
     }
 
+    /**
+     * Loads all tasks from disk.
+     *
+     * @return the tasks recovered from the file, or an empty list if the file is missing or invalid
+     */
     public List<Task> load() {
         List<Task> loadedTasks = new ArrayList<>();
         try {
@@ -51,6 +64,11 @@ public class Storage {
         }
     }
 
+    /**
+     * Saves the current task list to disk.
+     *
+     * @param tasks the tasks to persist
+     */
     public void save(List<Task> tasks) {
         try {
             Path directory = filePath.getParent();
@@ -68,6 +86,13 @@ public class Storage {
         }
     }
 
+    /**
+     * Parses a single serialized task line from the storage file.
+     *
+     * @param line the serialized task entry
+     * @return the reconstructed task object
+     * @throws IllegalArgumentException if the line format is invalid
+     */
     private Task parseTaskLine(String line) {
         String[] parts = line.split("\\s*\\|\\s*", -1);
         if (parts.length < 3) {
@@ -112,6 +137,12 @@ public class Storage {
         return task;
     }
 
+    /**
+     * Serializes a task into the format used by the storage file.
+     *
+     * @param task the task to convert to text
+     * @return the persisted representation of the task
+     */
     private String serializeTask(Task task) {
         StringBuilder builder = new StringBuilder();
         builder.append(task.getType().getSymbol()).append(" | ");
