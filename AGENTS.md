@@ -28,6 +28,14 @@ Unless the user says otherwise, assume that you are assisting a student working 
 
 Ensure that Java 25 is used when running the application or build tasks. On macOS, use `sdk use java 25.0.3.fx-zulu` to switch to Java 25 if needed.
 
+## Java coding standard
+
+Follow the project-specific skill `seedu-java-coding-standard` for all Java code in this repository. The project must comply with the SE-EDU Java coding standard (basic + intermediate), including naming conventions, layout, statements, and documentation requirements.
+
+## Git conventions
+
+Follow the project-specific skill `seedu-git-standard` for all future commits in this repository. All commit subjects and bodies must comply with the SE-EDU Git conventions.
+
 ## Testing coverage target
 
 Maintain a minimum JUnit test coverage target of 50% for the highest-value business logic in the project. JUnit tests must be reviewed and updated after each code change to keep this target and the relevant behavior checks in compliance.
