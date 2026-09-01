@@ -4,7 +4,7 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
 
 ```json
 {
-  "app_command": "cd /Users/bytedance/IdeaProjects/ip && javac src/main/java/TaskType.java src/main/java/Task.java src/main/java/Todo.java src/main/java/Deadline.java src/main/java/Event.java src/main/java/SageException.java src/main/java/Sage.java && java -cp src/main/java Sage",
+  "app_command": "cd /Users/bytedance/IdeaProjects/ip && rm -rf data && mkdir -p data && javac -d out src/main/java/*.java && java -cp out Sage",
   "cases": [
     {
       "id": "todo-list-and-exit",

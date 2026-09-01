@@ -1,3 +1,9 @@
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -5,8 +11,12 @@ import java.util.Scanner;
 public class Sage {
     private static final int MAX_TASKS = 100;
     private static final String LINE = "____________________________________________________________";
+    private static final Path DATA_DIR = Paths.get("data");
+    private static final Path DATA_FILE = DATA_DIR.resolve("sage.txt");
 
     public static void main(String[] args) {
+        List<Task> tasks = loadTasks();
+
         String banner = "  ____                       \n"
                 + " / ___|  __ _  __ _  ___     \n"
                 + " \\___ \\ / _` |/ _` |/ _ \\    \n"
@@ -20,7 +30,6 @@ public class Sage {
         System.out.println(LINE);
 
         Scanner scanner = new Scanner(System.in);
-        List<Task> tasks = new ArrayList<>(MAX_TASKS);
 
         while (scanner.hasNextLine()) {
             String input = scanner.nextLine();
@@ -102,6 +111,7 @@ public class Sage {
                         throw new SageException("The task number is invalid. Use a number from the current list.");
                     }
                     tasks.get(index - 1).markAsDone();
+                    saveTasks(tasks);
                     System.out.println("Nice! I've marked this task as done:");
                     System.out.println("  " + tasks.get(index - 1));
                     System.out.println(LINE);
@@ -118,6 +128,7 @@ public class Sage {
                         throw new SageException("The task number is invalid. Use a number from the current list.");
                     }
                     tasks.get(index - 1).markAsNotDone();
+                    saveTasks(tasks);
                     System.out.println("OK, I've marked this task as not done yet:");
                     System.out.println("  " + tasks.get(index - 1));
                     System.out.println(LINE);
@@ -134,6 +145,7 @@ public class Sage {
                         throw new SageException("The task number is invalid. Use a number from the current list.");
                     }
                     Task removed = tasks.remove(index - 1);
+                    saveTasks(tasks);
                     System.out.println("Noted. I've removed this task:");
                     System.out.println("  " + removed);
                     System.out.println("Now you have " + tasks.size() + " tasks in the list.");
@@ -158,6 +170,107 @@ public class Sage {
             System.out.println("Got it. I've added this task:");
             System.out.println("  " + task);
             System.out.println("Now you have " + tasks.size() + " tasks in the list.");
+            saveTasks(tasks);
         }
+    }
+
+    private static List<Task> loadTasks() {
+        List<Task> loadedTasks = new ArrayList<>();
+        try {
+            if (Files.notExists(DATA_FILE)) {
+                Files.createDirectories(DATA_DIR);
+                return loadedTasks;
+            }
+
+            List<String> lines = Files.readAllLines(DATA_FILE, StandardCharsets.UTF_8);
+            for (String line : lines) {
+                String trimmed = line.trim();
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+                loadedTasks.add(parseTaskLine(trimmed));
+            }
+            return loadedTasks;
+        } catch (IOException e) {
+            System.out.println("Warning: task data file is corrupted or unreadable. Starting with a clean list.");
+            return new ArrayList<>();
+        } catch (IllegalArgumentException e) {
+            System.out.println("Warning: task data file is corrupted. Starting with a clean list.");
+            return new ArrayList<>();
+        }
+    }
+
+    private static Task parseTaskLine(String line) {
+        String[] parts = line.split("\\s*\\|\\s*", -1);
+        if (parts.length < 3) {
+            throw new IllegalArgumentException("Invalid task format");
+        }
+
+        String typeToken = parts[0].trim();
+        String doneToken = parts[1].trim();
+        String description = parts[2].trim();
+
+        if (description.isEmpty()) {
+            throw new IllegalArgumentException("Missing description");
+        }
+
+        Task task;
+        switch (typeToken) {
+        case "T":
+            task = new Todo(description);
+            break;
+        case "D":
+            if (parts.length < 4) {
+                throw new IllegalArgumentException("Deadline missing due date");
+            }
+            task = new Deadline(description, parts[3].trim());
+            break;
+        case "E":
+            if (parts.length < 5) {
+                throw new IllegalArgumentException("Event missing times");
+            }
+            task = new Event(description, parts[3].trim(), parts[4].trim());
+            break;
+        default:
+            throw new IllegalArgumentException("Unknown task type");
+        }
+
+        if ("1".equals(doneToken)) {
+            task.markAsDone();
+        } else if (!"0".equals(doneToken)) {
+            throw new IllegalArgumentException("Invalid completion flag");
+        }
+
+        return task;
+    }
+
+    private static void saveTasks(List<Task> tasks) {
+        try {
+            Files.createDirectories(DATA_DIR);
+            try (BufferedWriter writer = Files.newBufferedWriter(DATA_FILE, StandardCharsets.UTF_8)) {
+                for (Task task : tasks) {
+                    writer.write(serializeTask(task));
+                    writer.newLine();
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Warning: could not save tasks to disk.");
+        }
+    }
+
+    private static String serializeTask(Task task) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(task.getType().getSymbol()).append(" | ");
+        builder.append(task.getStatusIcon().equals("X") ? "1" : "0").append(" | ");
+        if (task instanceof Deadline) {
+            Deadline deadline = (Deadline) task;
+            builder.append(deadline.getDescription()).append(" | ").append(deadline.by);
+        } else if (task instanceof Event) {
+            Event event = (Event) task;
+            builder.append(event.getDescription()).append(" | ").append(event.from).append(" | ").append(event.to);
+        } else {
+            builder.append(task.getDescription());
+        }
+        return builder.toString();
     }
 }
