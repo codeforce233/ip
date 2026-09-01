@@ -4,6 +4,7 @@ import sage.command.AddCommand;
 import sage.command.Command;
 import sage.command.DeleteCommand;
 import sage.command.ExitCommand;
+import sage.command.FindCommand;
 import sage.command.ListCommand;
 import sage.command.MarkCommand;
 import sage.command.UnmarkCommand;
@@ -15,7 +16,7 @@ import sage.task.Todo;
 public class Parser {
     public static Command parse(String fullCommand) throws SageException {
         if (fullCommand == null || fullCommand.trim().isEmpty()) {
-            throw new SageException("I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, delete, or bye.");
+            throw new SageException("I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, find, mark, unmark, delete, or bye.");
         }
 
         String input = fullCommand.trim();
@@ -25,6 +26,13 @@ public class Parser {
         }
         if ("list".equals(input)) {
             return new ListCommand();
+        }
+        if (input.startsWith("find")) {
+            String keyword = input.length() > 4 ? input.substring(4).trim() : "";
+            if (keyword.isEmpty()) {
+                throw new SageException("The keyword of a find cannot be empty. Try: find <keyword>");
+            }
+            return new FindCommand(keyword);
         }
         if (input.startsWith("todo")) {
             String description = input.length() > 4 ? input.substring(4).trim() : "";
@@ -93,7 +101,7 @@ public class Parser {
             return new DeleteCommand(parseIndex(indexText));
         }
 
-        throw new SageException("I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, delete, or bye.");
+        throw new SageException("I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, find, mark, unmark, delete, or bye.");
     }
 
     private static int parseIndex(String text) throws SageException {

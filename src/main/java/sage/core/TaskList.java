@@ -47,4 +47,19 @@ public class TaskList {
     public List<Task> getTasks() {
         return tasks;
     }
+
+    public List<Task> find(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String normalizedKeyword = keyword.trim().toLowerCase();
+        List<Task> matches = new ArrayList<>();
+        for (Task task : tasks) {
+            if (task.getDescription().toLowerCase().contains(normalizedKeyword)) {
+                matches.add(task);
+            }
+        }
+        return matches;
+    }
 }

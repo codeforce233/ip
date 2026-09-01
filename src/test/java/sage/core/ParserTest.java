@@ -14,6 +14,7 @@ import sage.command.AddCommand;
 import sage.command.Command;
 import sage.command.DeleteCommand;
 import sage.command.ExitCommand;
+import sage.command.FindCommand;
 import sage.command.ListCommand;
 import sage.command.MarkCommand;
 import sage.command.UnmarkCommand;
@@ -33,6 +34,9 @@ class ParserTest {
 
         Command list = Parser.parse("list");
         assertInstanceOf(ListCommand.class, list);
+
+        Command find = Parser.parse("find book");
+        assertInstanceOf(FindCommand.class, find);
 
         Command todo = Parser.parse("todo read book");
         assertInstanceOf(AddCommand.class, todo);
@@ -56,6 +60,7 @@ class ParserTest {
     @Test
     void parse_invalidCommandsThrowSageException() {
         assertThrows(SageException.class, () -> Parser.parse(""));
+        assertThrows(SageException.class, () -> Parser.parse("find "));
         assertThrows(SageException.class, () -> Parser.parse("todo "));
         assertThrows(SageException.class, () -> Parser.parse("deadline finish /by "));
         assertThrows(SageException.class, () -> Parser.parse("event meeting /from 2025-01-03 /to 2025-01-02"));

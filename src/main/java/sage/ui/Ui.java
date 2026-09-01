@@ -43,6 +43,20 @@ public class Ui {
         System.out.println(LINE);
     }
 
+    public void showMatchingTasks(List<Task> tasks) {
+        if (tasks.isEmpty()) {
+            System.out.println("There are no matching tasks in your list.");
+            System.out.println(LINE);
+            return;
+        }
+
+        System.out.println("Here are the matching tasks in your list:");
+        for (int i = 0; i < tasks.size(); i++) {
+            System.out.println((i + 1) + "." + tasks.get(i));
+        }
+        System.out.println(LINE);
+    }
+
     public void showAddedTask(Task task, int count) {
         System.out.println("Got it. I've added this task:");
         System.out.println("  " + task);
