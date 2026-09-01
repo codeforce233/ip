@@ -1,7 +1,13 @@
 import java.util.List;
+import java.util.Scanner;
 
 public class Ui {
     public static final String LINE = "____________________________________________________________";
+    private final Scanner scanner = new Scanner(System.in);
+
+    public String readCommand() {
+        return scanner.nextLine();
+    }
 
     public void showWelcome() {
         String banner = "  ____                       \n"
@@ -23,7 +29,6 @@ public class Ui {
 
     public void showBye() {
         System.out.println("Bye. Hope to see you again soon!");
-        System.out.println(LINE);
     }
 
     public void showTaskList(List<Task> tasks) {
