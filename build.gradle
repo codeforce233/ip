@@ -49,6 +49,7 @@ jar {
 
 shadowJar {
     archiveFileName = 'sage.jar'
+    mergeServiceFiles()
 }
 
 run {
