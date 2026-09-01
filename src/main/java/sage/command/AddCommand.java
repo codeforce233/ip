@@ -1,3 +1,10 @@
+package sage.command;
+
+import sage.core.TaskList;
+import sage.storage.Storage;
+import sage.task.Task;
+import sage.ui.Ui;
+
 public class AddCommand extends Command {
     private final Task task;
 

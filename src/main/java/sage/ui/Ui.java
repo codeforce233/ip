@@ -1,5 +1,9 @@
+package sage.ui;
+
 import java.util.List;
 import java.util.Scanner;
+
+import sage.task.Task;
 
 public class Ui {
     public static final String LINE = "____________________________________________________________";

@@ -1,3 +1,11 @@
+package sage;
+
+import sage.core.Parser;
+import sage.core.TaskList;
+import sage.exception.SageException;
+import sage.storage.Storage;
+import sage.ui.Ui;
+
 public class Sage {
     private final Ui ui;
     private final Storage storage;
@@ -18,7 +26,7 @@ public class Sage {
             boolean commandErrored = false;
             try {
                 ui.showLine();
-                Command command = Parser.parse(fullCommand);
+                sage.command.Command command = Parser.parse(fullCommand);
                 command.execute(tasks, ui, storage);
                 isExit = command.isExit();
             } catch (SageException e) {

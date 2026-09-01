@@ -1,3 +1,10 @@
+package sage.command;
+
+import sage.core.TaskList;
+import sage.exception.SageException;
+import sage.storage.Storage;
+import sage.ui.Ui;
+
 public class MarkCommand extends Command {
     private final int index;
 

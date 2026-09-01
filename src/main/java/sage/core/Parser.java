@@ -1,3 +1,17 @@
+package sage.core;
+
+import sage.command.AddCommand;
+import sage.command.Command;
+import sage.command.DeleteCommand;
+import sage.command.ExitCommand;
+import sage.command.ListCommand;
+import sage.command.MarkCommand;
+import sage.command.UnmarkCommand;
+import sage.exception.SageException;
+import sage.task.Deadline;
+import sage.task.Event;
+import sage.task.Todo;
+
 public class Parser {
     public static Command parse(String fullCommand) throws SageException {
         if (fullCommand == null || fullCommand.trim().isEmpty()) {

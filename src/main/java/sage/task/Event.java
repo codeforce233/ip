@@ -1,3 +1,5 @@
+package sage.task;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -5,9 +7,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-public class Deadline extends Task {
-    protected LocalDateTime by;
-    protected String byText;
+public class Event extends Task {
+    protected LocalDateTime from;
+    protected LocalDateTime to;
+    protected String fromText;
+    protected String toText;
     private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy, h:mma");
     private static final DateTimeFormatter DATE_ONLY_DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy");
     private static final List<DateTimeFormatter> INPUT_FORMATTERS = List.of(
@@ -19,24 +23,36 @@ public class Deadline extends Task {
             DateTimeFormatter.ofPattern("yyyy-MM-dd")
     );
 
-    public Deadline(String description, String by) {
-        super(description, TaskType.DEADLINE);
-        this.byText = by == null ? "" : by.trim();
-        this.by = parseDateTime(this.byText);
+    public Event(String description, String from, String to) {
+        super(description, TaskType.EVENT);
+        this.fromText = from == null ? "" : from.trim();
+        this.toText = to == null ? "" : to.trim();
+        this.from = parseDateTime(this.fromText);
+        this.to = parseDateTime(this.toText);
     }
 
-    public Deadline(String description, LocalDateTime by) {
-        super(description, TaskType.DEADLINE);
-        this.by = by;
-        this.byText = by == null ? "" : by.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    public Event(String description, LocalDateTime from, LocalDateTime to) {
+        super(description, TaskType.EVENT);
+        this.from = from;
+        this.to = to;
+        this.fromText = from == null ? "" : from.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        this.toText = to == null ? "" : to.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
-    public LocalDateTime getBy() {
-        return by;
+    public LocalDateTime getFrom() {
+        return from;
     }
 
-    public String getByText() {
-        return byText;
+    public LocalDateTime getTo() {
+        return to;
+    }
+
+    public String getFromText() {
+        return fromText;
+    }
+
+    public String getToText() {
+        return toText;
     }
 
     public static LocalDateTime parseDateTime(String rawValue) {
@@ -65,18 +81,20 @@ public class Deadline extends Task {
         }
     }
 
-    private String formatBy() {
-        if (by == null) {
-            return byText;
+    private String formatDateTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "";
         }
-        if (by.toLocalTime().equals(LocalTime.MIDNIGHT)) {
-            return by.toLocalDate().format(DATE_ONLY_DISPLAY_FORMATTER);
+        if (dateTime.toLocalTime().equals(LocalTime.MIDNIGHT)) {
+            return dateTime.toLocalDate().format(DATE_ONLY_DISPLAY_FORMATTER);
         }
-        return by.format(DISPLAY_FORMATTER);
+        return dateTime.format(DISPLAY_FORMATTER);
     }
 
     @Override
     public String toString() {
-        return "[" + type.getSymbol() + "][" + getStatusIcon() + "] " + description + " (by: " + formatBy() + ")";
+        return "[" + type.getSymbol() + "][" + getStatusIcon() + "] " + description
+                + " (from: " + (from != null ? formatDateTime(from) : fromText)
+                + " to: " + (to != null ? formatDateTime(to) : toText) + ")";
     }
 }

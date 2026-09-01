@@ -1,7 +1,15 @@
-public class UnmarkCommand extends Command {
+package sage.command;
+
+import sage.core.TaskList;
+import sage.exception.SageException;
+import sage.storage.Storage;
+import sage.task.Task;
+import sage.ui.Ui;
+
+public class DeleteCommand extends Command {
     private final int index;
 
-    public UnmarkCommand(int index) {
+    public DeleteCommand(int index) {
         this.index = index;
     }
 
@@ -10,8 +18,8 @@ public class UnmarkCommand extends Command {
         if (index <= 0 || index > tasks.size()) {
             throw new SageException("The task number is invalid. Use a number from the current list.");
         }
-        tasks.markUndone(index - 1);
+        Task removed = tasks.delete(index - 1);
         storage.save(tasks.getTasks());
-        ui.showMarkedUndone(tasks.get(index - 1));
+        ui.showRemovedTask(removed, tasks.size());
     }
 }

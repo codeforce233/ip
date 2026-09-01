@@ -1,3 +1,5 @@
+package sage.storage;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -7,6 +9,11 @@ import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+import sage.task.Deadline;
+import sage.task.Event;
+import sage.task.Task;
+import sage.task.Todo;
 
 public class Storage {
     private final Path filePath;

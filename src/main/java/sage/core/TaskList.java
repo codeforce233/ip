@@ -1,5 +1,9 @@
+package sage.core;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import sage.task.Task;
 
 public class TaskList {
     private static final int MAX_TASKS = 100;
