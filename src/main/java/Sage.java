@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Sage {
@@ -18,8 +20,7 @@ public class Sage {
         System.out.println(LINE);
 
         Scanner scanner = new Scanner(System.in);
-        Task[] tasks = new Task[MAX_TASKS];
-        int taskCount = 0;
+        List<Task> tasks = new ArrayList<>(MAX_TASKS);
 
         while (scanner.hasNextLine()) {
             String input = scanner.nextLine();
@@ -34,8 +35,8 @@ public class Sage {
 
                 if ("list".equals(input)) {
                     System.out.println("Here are the tasks in your list:");
-                    for (int i = 0; i < taskCount; i++) {
-                        System.out.println((i + 1) + "." + tasks[i]);
+                    for (int i = 0; i < tasks.size(); i++) {
+                        System.out.println((i + 1) + "." + tasks.get(i));
                     }
                     System.out.println(LINE);
                     continue;
@@ -46,7 +47,7 @@ public class Sage {
                     if (description.isEmpty()) {
                         throw new SageException("The description of a todo cannot be empty. Try: todo <task>");
                     }
-                    taskCount = addTask(tasks, taskCount, new Todo(description));
+                    addTask(tasks, new Todo(description));
                     System.out.println(LINE);
                     continue;
                 }
@@ -61,11 +62,11 @@ public class Sage {
                     if (description.isEmpty()) {
                         throw new SageException("The description of a deadline cannot be empty. Try: deadline <task> /by <time>");
                     }
-                    String by = rest.substring(byIndex + 4).trim();
+                    String by = rest.substring(byIndex + 5).trim();
                     if (by.isEmpty()) {
                         throw new SageException("The deadline time cannot be empty. Try: deadline <task> /by <time>");
                     }
-                    taskCount = addTask(tasks, taskCount, new Deadline(description, by));
+                    addTask(tasks, new Deadline(description, by));
                     System.out.println(LINE);
                     continue;
                 }
@@ -86,7 +87,7 @@ public class Sage {
                     if (from.isEmpty() || to.isEmpty()) {
                         throw new SageException("The event timings cannot be empty. Try: event <task> /from <start> /to <end>");
                     }
-                    taskCount = addTask(tasks, taskCount, new Event(description, from, to));
+                    addTask(tasks, new Event(description, from, to));
                     System.out.println(LINE);
                     continue;
                 }
@@ -97,12 +98,12 @@ public class Sage {
                         throw new SageException("The task number is missing. Try: mark <task number>");
                     }
                     int index = Integer.parseInt(indexText);
-                    if (index <= 0 || index > taskCount) {
+                    if (index <= 0 || index > tasks.size()) {
                         throw new SageException("The task number is invalid. Use a number from the current list.");
                     }
-                    tasks[index - 1].markAsDone();
+                    tasks.get(index - 1).markAsDone();
                     System.out.println("Nice! I've marked this task as done:");
-                    System.out.println("  " + tasks[index - 1]);
+                    System.out.println("  " + tasks.get(index - 1));
                     System.out.println(LINE);
                     continue;
                 }
@@ -113,35 +114,50 @@ public class Sage {
                         throw new SageException("The task number is missing. Try: unmark <task number>");
                     }
                     int index = Integer.parseInt(indexText);
-                    if (index <= 0 || index > taskCount) {
+                    if (index <= 0 || index > tasks.size()) {
                         throw new SageException("The task number is invalid. Use a number from the current list.");
                     }
-                    tasks[index - 1].markAsNotDone();
+                    tasks.get(index - 1).markAsNotDone();
                     System.out.println("OK, I've marked this task as not done yet:");
-                    System.out.println("  " + tasks[index - 1]);
+                    System.out.println("  " + tasks.get(index - 1));
                     System.out.println(LINE);
                     continue;
                 }
 
-                throw new SageException("I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, or bye.");
+                if (input.startsWith("delete")) {
+                    String indexText = input.length() > 6 ? input.substring(6).trim() : "";
+                    if (indexText.isEmpty()) {
+                        throw new SageException("The task number is missing. Try: delete <task number>");
+                    }
+                    int index = Integer.parseInt(indexText);
+                    if (index <= 0 || index > tasks.size()) {
+                        throw new SageException("The task number is invalid. Use a number from the current list.");
+                    }
+                    Task removed = tasks.remove(index - 1);
+                    System.out.println("Noted. I've removed this task:");
+                    System.out.println("  " + removed);
+                    System.out.println("Now you have " + tasks.size() + " tasks in the list.");
+                    System.out.println(LINE);
+                    continue;
+                }
+
+                throw new SageException("I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, delete, or bye.");
             } catch (SageException e) {
                 System.out.println("OOPS!!! " + e.getMessage());
                 System.out.println(LINE);
             } catch (NumberFormatException e) {
-                System.out.println("OOPS!!! The task number must be a valid integer. Try: mark <number> or unmark <number>");
+                System.out.println("OOPS!!! The task number must be a valid integer. Try: mark <number>, unmark <number>, or delete <number>");
                 System.out.println(LINE);
             }
         }
     }
 
-    private static int addTask(Task[] tasks, int taskCount, Task task) {
-        if (taskCount < MAX_TASKS) {
-            tasks[taskCount] = task;
+    private static void addTask(List<Task> tasks, Task task) {
+        if (tasks.size() < MAX_TASKS) {
+            tasks.add(task);
             System.out.println("Got it. I've added this task:");
             System.out.println("  " + task);
-            System.out.println("Now you have " + (taskCount + 1) + " tasks in the list.");
-            return taskCount + 1;
+            System.out.println("Now you have " + tasks.size() + " tasks in the list.");
         }
-        return taskCount;
     }
 }
