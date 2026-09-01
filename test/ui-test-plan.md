@@ -4,7 +4,7 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
 
 ```json
 {
-  "app_command": "cd /Users/bytedance/IdeaProjects/ip && javac src/main/java/Task.java src/main/java/Todo.java src/main/java/Deadline.java src/main/java/Event.java src/main/java/Sage.java && java -cp src/main/java Sage",
+  "app_command": "cd /Users/bytedance/IdeaProjects/ip && javac src/main/java/Task.java src/main/java/Todo.java src/main/java/Deadline.java src/main/java/Event.java src/main/java/SageException.java src/main/java/Sage.java && java -cp src/main/java Sage",
   "cases": [
     {
       "id": "todo-list-and-exit",
@@ -17,10 +17,40 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
       "aim": "Verify deadline and event tasks are created with their descriptors and prefixes.",
       "input": "deadline return book /by Sunday\nevent project meeting /from Mon 2pm /to 4pm\nbye\n",
       "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [D][ ] return book (by: Sunday)\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [E][ ] project meeting (from: Mon 2pm to: 4pm)\nNow you have 2 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "mark-then-list-preserves-state",
+      "aim": "Verify positive task creation and marking keep the internal state consistent across multiple commands.",
+      "input": "todo read book\ntodo return book\nmark 1\nlist\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] read book\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] return book\nNow you have 2 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nNice! I've marked this task as done:\n  [T][X] read book\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[T][X] read book\n2.[T][ ] return book\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "invalid-mark-does-not-change-state",
+      "aim": "Verify an invalid mark command does not mutate the list or corrupt task state.",
+      "input": "todo read book\nmark 99\nlist\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] read book\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nOOPS!!! The task number is invalid. Use a number from the current list.\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[T][ ] read book\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "invalid-command-after-valid-task",
+      "aim": "Verify an incorrect input does not add a bogus task and keeps previously valid tasks intact.",
+      "input": "todo read book\nblah\nlist\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] read book\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nOOPS!!! I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, or bye.\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[T][ ] read book\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "empty-todo-error",
+      "aim": "Verify empty todo entries are rejected with a clear error message.",
+      "input": "todo\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nOOPS!!! The description of a todo cannot be empty. Try: todo <task>\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "unknown-command-error",
+      "aim": "Verify unrecognized commands are rejected with a clear error message.",
+      "input": "blah\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nOOPS!!! I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, or bye.\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
     }
   ]
 }
-```
+``` 
 
 ## Notes
 
