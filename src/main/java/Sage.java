@@ -4,6 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -96,7 +98,11 @@ public class Sage {
                     if (from.isEmpty() || to.isEmpty()) {
                         throw new SageException("The event timings cannot be empty. Try: event <task> /from <start> /to <end>");
                     }
-                    addTask(tasks, new Event(description, from, to));
+                    Event event = new Event(description, from, to);
+                    if (event.getFrom() != null && event.getTo() != null && event.getFrom().isAfter(event.getTo())) {
+                        throw new SageException("The event end time must be after the start time.");
+                    }
+                    addTask(tasks, event);
                     System.out.println(LINE);
                     continue;
                 }
@@ -264,10 +270,26 @@ public class Sage {
         builder.append(task.getStatusIcon().equals("X") ? "1" : "0").append(" | ");
         if (task instanceof Deadline) {
             Deadline deadline = (Deadline) task;
-            builder.append(deadline.getDescription()).append(" | ").append(deadline.by);
+            builder.append(deadline.getDescription()).append(" | ");
+            if (deadline.getBy() != null) {
+                builder.append(deadline.getBy().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            } else {
+                builder.append(deadline.getByText());
+            }
         } else if (task instanceof Event) {
             Event event = (Event) task;
-            builder.append(event.getDescription()).append(" | ").append(event.from).append(" | ").append(event.to);
+            builder.append(event.getDescription()).append(" | ");
+            if (event.getFrom() != null) {
+                builder.append(event.getFrom().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            } else {
+                builder.append(event.getFromText());
+            }
+            builder.append(" | ");
+            if (event.getTo() != null) {
+                builder.append(event.getTo().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            } else {
+                builder.append(event.getToText());
+            }
         } else {
             builder.append(task.getDescription());
         }
