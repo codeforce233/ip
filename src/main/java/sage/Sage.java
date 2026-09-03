@@ -1,5 +1,6 @@
 package sage;
 
+import sage.command.Command;
 import sage.core.Parser;
 import sage.core.TaskList;
 import sage.exception.SageException;
@@ -17,7 +18,7 @@ public class Sage {
     /**
      * Creates a Sage application instance backed by a data file.
      *
-     * @param filePath the path where task data is stored
+     * @param filePath The path where task data is stored.
      */
     public Sage(String filePath) {
         ui = new Ui();
@@ -34,17 +35,17 @@ public class Sage {
         while (!isExit) {
             String fullCommand = ui.readCommand();
             boolean isListCommand = "list".equals(fullCommand.trim());
-            boolean commandErrored = false;
+            boolean hasCommandErrored = false;
             try {
                 ui.showLine();
-                sage.command.Command command = Parser.parse(fullCommand);
+                Command command = Parser.parse(fullCommand);
                 command.execute(tasks, ui, storage);
                 isExit = command.isExit();
             } catch (SageException e) {
                 ui.showError(e.getMessage());
-                commandErrored = true;
+                hasCommandErrored = true;
             } finally {
-                if (!isListCommand && !commandErrored) {
+                if (!isListCommand && !hasCommandErrored) {
                     ui.showLine();
                 }
             }
@@ -54,7 +55,7 @@ public class Sage {
     /**
      * Runs the task manager with the default persistent data path.
      *
-     * @param args command-line arguments, currently unused
+     * @param args Command-line arguments, currently unused.
      */
     public static void main(String[] args) {
         new Sage("data/sage.txt").run();

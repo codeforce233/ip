@@ -11,8 +11,16 @@ import java.util.List;
  * Represents a task that must be done by a specific date and time.
  */
 public class Deadline extends Task {
+    /**
+     * Due date and time, or {@code null} if no parsed value is available.
+     */
     protected LocalDateTime by;
+
+    /**
+     * Text retained as the deadline's stored representation.
+     */
     protected String byText;
+
     private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy, h:mma");
     private static final DateTimeFormatter DATE_ONLY_DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy");
     private static final List<DateTimeFormatter> INPUT_FORMATTERS = List.of(
@@ -27,8 +35,8 @@ public class Deadline extends Task {
     /**
      * Creates a deadline from a user-provided date string.
      *
-     * @param description the task description
-     * @param by the deadline value as text
+     * @param description the task description.
+     * @param by the deadline value as text.
      */
     public Deadline(String description, String by) {
         super(description, TaskType.DEADLINE);
@@ -39,8 +47,8 @@ public class Deadline extends Task {
     /**
      * Creates a deadline from a Java LocalDateTime value.
      *
-     * @param description the task description
-     * @param by the deadline time
+     * @param description the task description.
+     * @param by the deadline time.
      */
     public Deadline(String description, LocalDateTime by) {
         super(description, TaskType.DEADLINE);
@@ -49,18 +57,18 @@ public class Deadline extends Task {
     }
 
     /**
-     * Returns the parsed due date and time.
+     * Returns the due date and time.
      *
-     * @return the deadline timestamp, or null if parsing failed
+     * @return the deadline timestamp, or {@code null} if none is available.
      */
     public LocalDateTime getBy() {
         return by;
     }
 
     /**
-     * Returns the original text used to parse the deadline.
+     * Returns the stored textual representation of the deadline.
      *
-     * @return the raw deadline string
+     * @return the stored deadline text.
      */
     public String getByText() {
         return byText;
@@ -69,8 +77,8 @@ public class Deadline extends Task {
     /**
      * Parses a date or date-time string into a LocalDateTime value.
      *
-     * @param rawValue the user-entered deadline text
-     * @return the parsed time, or null if the input is not in a supported format
+     * @param rawValue the user-entered deadline text.
+     * @return the parsed time, or {@code null} if the input is not in a supported format.
      */
     public static LocalDateTime parseDateTime(String rawValue) {
         String value = rawValue == null ? "" : rawValue.trim();
@@ -101,7 +109,7 @@ public class Deadline extends Task {
     /**
      * Formats the internal deadline value for display in the UI.
      *
-     * @return the formatted deadline text
+     * @return the formatted deadline text.
      */
     private String formatBy() {
         if (by == null) {
@@ -116,7 +124,7 @@ public class Deadline extends Task {
     /**
      * Formats the task as a string suitable for terminal display.
      *
-     * @return the user-facing description of the deadline task
+     * @return the user-facing description of the deadline task.
      */
     @Override
     public String toString() {

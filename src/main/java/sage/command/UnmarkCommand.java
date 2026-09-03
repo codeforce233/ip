@@ -14,7 +14,7 @@ public class UnmarkCommand extends Command {
     /**
      * Creates a command that marks the task at the given one-based position as undone.
      *
-     * @param index the one-based position of the task to mark incomplete
+     * @param index the one-based position of the task to mark incomplete.
      */
     public UnmarkCommand(int index) {
         this.index = index;
@@ -23,10 +23,10 @@ public class UnmarkCommand extends Command {
     /**
      * Marks the selected task as incomplete, persists the change, and shows a confirmation.
      *
-     * @param tasks the task list to modify
-     * @param ui the UI used for feedback
-     * @param storage the storage system used to save the list
-     * @throws SageException if the task number is invalid
+     * @param tasks the task list to modify.
+     * @param ui the user interface used to display feedback.
+     * @param storage the storage system used to save the list.
+     * @throws SageException if the task number is invalid.
      */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) throws SageException {

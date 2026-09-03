@@ -14,7 +14,7 @@ public class AddCommand extends Command {
     /**
      * Creates a command to add a specific task.
      *
-     * @param task the task to add
+     * @param task the task to add.
      */
     public AddCommand(Task task) {
         this.task = task;
@@ -23,9 +23,10 @@ public class AddCommand extends Command {
     /**
      * Adds the task to the list, saves it, and shows confirmation.
      *
-     * @param tasks the task list to update
-     * @param ui the user interface to display the result
-     * @param storage the storage system to persist the update
+     * @param tasks the task list to update.
+     * @param ui the user interface used to display the result.
+     * @param storage the storage system used to persist the update.
+     * @throws IllegalStateException if the task list has reached its capacity.
      */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) {

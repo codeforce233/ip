@@ -15,7 +15,7 @@ public class DeleteCommand extends Command {
     /**
      * Creates a delete command for a one-based task number.
      *
-     * @param index the one-based position of the task to delete
+     * @param index the one-based position of the task to delete.
      */
     public DeleteCommand(int index) {
         this.index = index;
@@ -24,10 +24,10 @@ public class DeleteCommand extends Command {
     /**
      * Removes the chosen task, persists the updated list, and shows confirmation.
      *
-     * @param tasks the task list to modify
-     * @param ui the user interface to display output
-     * @param storage the storage system to persist the change
-     * @throws SageException if the task number is invalid
+     * @param tasks the task list to modify.
+     * @param ui the user interface used to display output.
+     * @param storage the storage system used to persist the change.
+     * @throws SageException if the task number is invalid.
      */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) throws SageException {

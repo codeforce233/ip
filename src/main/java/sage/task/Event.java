@@ -11,10 +11,26 @@ import java.util.List;
  * Represents a task that spans a start time and an end time.
  */
 public class Event extends Task {
+    /**
+     * Start date and time, or {@code null} if no parsed value is available.
+     */
     protected LocalDateTime from;
+
+    /**
+     * End date and time, or {@code null} if no parsed value is available.
+     */
     protected LocalDateTime to;
+
+    /**
+     * Text retained as the event's stored start representation.
+     */
     protected String fromText;
+
+    /**
+     * Text retained as the event's stored end representation.
+     */
     protected String toText;
+
     private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy, h:mma");
     private static final DateTimeFormatter DATE_ONLY_DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy");
     private static final List<DateTimeFormatter> INPUT_FORMATTERS = List.of(
@@ -29,9 +45,9 @@ public class Event extends Task {
     /**
      * Creates an event from raw text for its start and end times.
      *
-     * @param description the event description
-     * @param from the start time text
-     * @param to the end time text
+     * @param description the event description.
+     * @param from the start time text.
+     * @param to the end time text.
      */
     public Event(String description, String from, String to) {
         super(description, TaskType.EVENT);
@@ -44,9 +60,9 @@ public class Event extends Task {
     /**
      * Creates an event from LocalDateTime instances.
      *
-     * @param description the event description
-     * @param from the starting date-time
-     * @param to the ending date-time
+     * @param description the event description.
+     * @param from the starting date-time.
+     * @param to the ending date-time.
      */
     public Event(String description, LocalDateTime from, LocalDateTime to) {
         super(description, TaskType.EVENT);
@@ -59,7 +75,7 @@ public class Event extends Task {
     /**
      * Returns the starting date-time for the event.
      *
-     * @return the start time or null if not parsed
+     * @return the start time, or {@code null} if none is available.
      */
     public LocalDateTime getFrom() {
         return from;
@@ -68,25 +84,25 @@ public class Event extends Task {
     /**
      * Returns the ending date-time for the event.
      *
-     * @return the end time or null if not parsed
+     * @return the end time, or {@code null} if none is available.
      */
     public LocalDateTime getTo() {
         return to;
     }
 
     /**
-     * Returns the original start text.
+     * Returns the stored textual representation of the event's start.
      *
-     * @return the raw start text
+     * @return the stored start text.
      */
     public String getFromText() {
         return fromText;
     }
 
     /**
-     * Returns the original end text.
+     * Returns the stored textual representation of the event's end.
      *
-     * @return the raw end text
+     * @return the stored end text.
      */
     public String getToText() {
         return toText;
@@ -95,8 +111,8 @@ public class Event extends Task {
     /**
      * Parses a date or date-time string into a LocalDateTime value.
      *
-     * @param rawValue the user-entered time text
-     * @return the parsed time, or null if the input is not in a supported format
+     * @param rawValue the user-entered time text.
+     * @return the parsed time, or {@code null} if the input is not in a supported format.
      */
     public static LocalDateTime parseDateTime(String rawValue) {
         String value = rawValue == null ? "" : rawValue.trim();
@@ -127,8 +143,8 @@ public class Event extends Task {
     /**
      * Formats a date-time for terminal display.
      *
-     * @param dateTime the value to format
-     * @return the formatted display string
+     * @param dateTime the value to format.
+     * @return the formatted display string, or an empty string if the value is {@code null}.
      */
     private String formatDateTime(LocalDateTime dateTime) {
         if (dateTime == null) {
@@ -143,7 +159,7 @@ public class Event extends Task {
     /**
      * Formats the event as a user-facing string summary.
      *
-     * @return the formatted event description for display
+     * @return the formatted event description for display.
      */
     @Override
     public String toString() {

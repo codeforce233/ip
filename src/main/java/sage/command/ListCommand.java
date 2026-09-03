@@ -9,11 +9,17 @@ import sage.ui.Ui;
  */
 public class ListCommand extends Command {
     /**
+     * Creates a command that lists all tasks.
+     */
+    public ListCommand() {
+    }
+
+    /**
      * Prints all tasks currently stored in the list.
      *
-     * @param tasks the task list to display
-     * @param ui the user interface used to print the list
-     * @param storage the storage system, not used by this command
+     * @param tasks the task list to display.
+     * @param ui the user interface used to display the list.
+     * @param storage the storage system, which is not used by this command.
      */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) {

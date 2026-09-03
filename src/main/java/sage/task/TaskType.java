@@ -22,7 +22,7 @@ public enum TaskType {
     /**
      * Creates a task type with its persistence symbol.
      *
-     * @param symbol the one-character code used when storing tasks on disk
+     * @param symbol the one-character code used when storing tasks on disk.
      */
     TaskType(String symbol) {
         this.symbol = symbol;
@@ -31,7 +31,7 @@ public enum TaskType {
     /**
      * Returns the short symbol used to identify this task type.
      *
-     * @return the storage symbol for the task type
+     * @return the storage symbol for the task type.
      */
     public String getSymbol() {
         return symbol;

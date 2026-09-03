@@ -24,7 +24,7 @@ public class Storage {
     /**
      * Creates a storage object for the given file path.
      *
-     * @param filePath the location of the serialized task data
+     * @param filePath the location of the serialized task data.
      */
     public Storage(String filePath) {
         this.filePath = Paths.get(filePath);
@@ -33,7 +33,7 @@ public class Storage {
     /**
      * Loads all tasks from disk.
      *
-     * @return the tasks recovered from the file, or an empty list if the file is missing or invalid
+     * @return the tasks recovered from the file, or an empty list if the file is missing or invalid.
      */
     public List<Task> load() {
         List<Task> loadedTasks = new ArrayList<>();
@@ -65,9 +65,10 @@ public class Storage {
     }
 
     /**
-     * Saves the current task list to disk.
+     * Attempts to save the current task list to disk.
+     * Prints a warning if the data cannot be written.
      *
-     * @param tasks the tasks to persist
+     * @param tasks the tasks to persist.
      */
     public void save(List<Task> tasks) {
         try {
@@ -89,9 +90,9 @@ public class Storage {
     /**
      * Parses a single serialized task line from the storage file.
      *
-     * @param line the serialized task entry
-     * @return the reconstructed task object
-     * @throws IllegalArgumentException if the line format is invalid
+     * @param line the serialized task entry.
+     * @return the reconstructed task object.
+     * @throws IllegalArgumentException if the line format is invalid.
      */
     private Task parseTaskLine(String line) {
         String[] parts = line.split("\\s*\\|\\s*", -1);
@@ -109,23 +110,23 @@ public class Storage {
 
         Task task;
         switch (typeToken) {
-        case "T":
-            task = new Todo(description);
-            break;
-        case "D":
-            if (parts.length < 4) {
-                throw new IllegalArgumentException("Deadline missing due date");
-            }
-            task = new Deadline(description, parts[3].trim());
-            break;
-        case "E":
-            if (parts.length < 5) {
-                throw new IllegalArgumentException("Event missing times");
-            }
-            task = new Event(description, parts[3].trim(), parts[4].trim());
-            break;
-        default:
-            throw new IllegalArgumentException("Unknown task type");
+            case "T":
+                task = new Todo(description);
+                break;
+            case "D":
+                if (parts.length < 4) {
+                    throw new IllegalArgumentException("Deadline missing due date");
+                }
+                task = new Deadline(description, parts[3].trim());
+                break;
+            case "E":
+                if (parts.length < 5) {
+                    throw new IllegalArgumentException("Event missing times");
+                }
+                task = new Event(description, parts[3].trim(), parts[4].trim());
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown task type");
         }
 
         if ("1".equals(doneToken)) {
@@ -140,8 +141,8 @@ public class Storage {
     /**
      * Serializes a task into the format used by the storage file.
      *
-     * @param task the task to convert to text
-     * @return the persisted representation of the task
+     * @param task the task to convert to text.
+     * @return the persisted representation of the task.
      */
     private String serializeTask(Task task) {
         StringBuilder builder = new StringBuilder();

@@ -22,7 +22,7 @@ public class TaskList {
     /**
      * Creates a task list with the provided tasks.
      *
-     * @param tasks the initial tasks to populate the list with
+     * @param tasks The initial tasks to populate the list with.
      */
     public TaskList(List<Task> tasks) {
         this.tasks = new ArrayList<>(tasks);
@@ -31,7 +31,8 @@ public class TaskList {
     /**
      * Adds a task to the list if it is below the capacity limit.
      *
-     * @param task the task to add
+     * @param task The task to add.
+     * @throws IllegalStateException If the task list has reached its maximum capacity.
      */
     public void add(Task task) {
         if (tasks.size() >= MAX_TASKS) {
@@ -43,8 +44,9 @@ public class TaskList {
     /**
      * Removes and returns the task at the given index.
      *
-     * @param index the zero-based index of the task to delete
-     * @return the removed task
+     * @param index The zero-based index of the task to delete.
+     * @return The removed task.
+     * @throws IndexOutOfBoundsException If the index is outside the task list.
      */
     public Task delete(int index) {
         return tasks.remove(index);
@@ -53,7 +55,8 @@ public class TaskList {
     /**
      * Marks the task at the given index as complete.
      *
-     * @param index the zero-based index of the task
+     * @param index The zero-based index of the task.
+     * @throws IndexOutOfBoundsException If the index is outside the task list.
      */
     public void markDone(int index) {
         tasks.get(index).markAsDone();
@@ -62,7 +65,8 @@ public class TaskList {
     /**
      * Marks the task at the given index as incomplete.
      *
-     * @param index the zero-based index of the task
+     * @param index The zero-based index of the task.
+     * @throws IndexOutOfBoundsException If the index is outside the task list.
      */
     public void markUndone(int index) {
         tasks.get(index).markAsNotDone();
@@ -71,17 +75,18 @@ public class TaskList {
     /**
      * Returns the task at the given index.
      *
-     * @param index the zero-based index of the task
-     * @return the task at that index
+     * @param index The zero-based index of the task.
+     * @return The task at that index.
+     * @throws IndexOutOfBoundsException If the index is outside the task list.
      */
     public Task get(int index) {
         return tasks.get(index);
     }
 
     /**
-     * Gets the number of tasks currently in the list.
+     * Returns the number of tasks currently in the list.
      *
-     * @return the size of the task list
+     * @return The size of the task list.
      */
     public int size() {
         return tasks.size();
@@ -90,12 +95,19 @@ public class TaskList {
     /**
      * Returns the backing list of tasks.
      *
-     * @return the current task collection
+     * @return The current task collection.
      */
     public List<Task> getTasks() {
         return tasks;
     }
 
+    /**
+     * Returns tasks whose descriptions contain the given keyword, ignoring case.
+     * A null or blank keyword produces an empty result.
+     *
+     * @param keyword The keyword to find in task descriptions.
+     * @return A new list containing the matching tasks.
+     */
     public List<Task> find(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return new ArrayList<>();
