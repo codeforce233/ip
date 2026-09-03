@@ -1,0 +1,40 @@
+.dialog-box {
+    -fx-padding: 5px 10px;
+}
+
+.dialog-label {
+    -fx-font-size: 14px;
+    -fx-line-spacing: 2px;
+    -fx-padding: 10px 12px;
+    -fx-text-fill: #111827;
+}
+
+.user-dialog .dialog-label {
+    -fx-background-color: #dcfce7;
+    -fx-background-radius: 14px 14px 2px 14px;
+    -fx-border-color: #86efac;
+    -fx-border-radius: 14px 14px 2px 14px;
+}
+
+.sage-dialog .dialog-label {
+    -fx-background-color: #e0e7ff;
+    -fx-background-radius: 14px 14px 14px 2px;
+    -fx-border-color: #a5b4fc;
+    -fx-border-radius: 14px 14px 14px 2px;
+}
+
+.avatar-label {
+    -fx-background-radius: 999px;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.18), 6, 0.15, 0, 2);
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.user-dialog .avatar-label {
+    -fx-background-color: #0f766e;
+}
+
+.sage-dialog .avatar-label {
+    -fx-background-color: #4338ca;
+}

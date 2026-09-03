@@ -1,33 +1,60 @@
 package sage.ui;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 import sage.task.Task;
 
 /**
- * Handles console input and presents user-facing messages for Sage.
+ * Reads console commands and sends Sage messages to a configured output destination.
  */
 public class Ui {
     /**
      * Separates command responses in the console.
      */
     public static final String LINE = "____________________________________________________________";
+
+    /**
+     * Reads console commands, or is null when this interface is configured for output only.
+     */
     private final Scanner scanner;
+
+    /**
+     * Receives each line produced by the display methods.
+     */
+    private final Consumer<String> output;
 
     /**
      * Creates a user interface that reads from standard input.
      */
     public Ui() {
         scanner = new Scanner(System.in);
+        output = line -> System.out.println(line);
+    }
+
+    /**
+     * Creates a user interface that sends messages to the given output consumer.
+     * This output-only interface does not read commands from standard input.
+     *
+     * @param output The consumer that receives each line of user-facing output.
+     */
+    public Ui(Consumer<String> output) {
+        scanner = null;
+        this.output = Objects.requireNonNull(output);
     }
 
     /**
      * Reads the next command entered by the user.
      *
      * @return The next line from standard input.
+     * @throws IllegalStateException If this interface was created for output only.
      */
     public String readCommand() {
+        if (scanner == null) {
+            throw new IllegalStateException("This user interface does not accept command input.");
+        }
         return scanner.nextLine();
     }
 
@@ -41,25 +68,25 @@ public class Ui {
                 + "  ___) | (_| | (_| |  __/    \n"
                 + " |____/ \\__,_|\\__, |\\___|    \n"
                 + "              |___/          \n";
-        System.out.println(LINE);
-        System.out.println(banner);
-        System.out.println("Hello! I'm Sage.");
-        System.out.println("What can I do for you?");
-        System.out.println(LINE);
+        output.accept(LINE);
+        output.accept(banner);
+        output.accept("Hello! I'm Sage.");
+        output.accept("What can I do for you?");
+        output.accept(LINE);
     }
 
     /**
      * Shows the separator used between command responses.
      */
     public void showLine() {
-        System.out.println(LINE);
+        output.accept(LINE);
     }
 
     /**
      * Shows the farewell message.
      */
     public void showBye() {
-        System.out.println("Bye. Hope to see you again soon!");
+        output.accept("Bye. Hope to see you again soon!");
     }
 
     /**
@@ -68,11 +95,11 @@ public class Ui {
      * @param tasks The tasks to display.
      */
     public void showTaskList(List<Task> tasks) {
-        System.out.println("Here are the tasks in your list:");
+        output.accept("Here are the tasks in your list:");
         for (int i = 0; i < tasks.size(); i++) {
-            System.out.println((i + 1) + "." + tasks.get(i));
+            output.accept((i + 1) + "." + tasks.get(i));
         }
-        System.out.println(LINE);
+        output.accept(LINE);
     }
 
     /**
@@ -82,16 +109,16 @@ public class Ui {
      */
     public void showMatchingTasks(List<Task> tasks) {
         if (tasks.isEmpty()) {
-            System.out.println("There are no matching tasks in your list.");
-            System.out.println(LINE);
+            output.accept("There are no matching tasks in your list.");
+            output.accept(LINE);
             return;
         }
 
-        System.out.println("Here are the matching tasks in your list:");
+        output.accept("Here are the matching tasks in your list:");
         for (int i = 0; i < tasks.size(); i++) {
-            System.out.println((i + 1) + "." + tasks.get(i));
+            output.accept((i + 1) + "." + tasks.get(i));
         }
-        System.out.println(LINE);
+        output.accept(LINE);
     }
 
     /**
@@ -101,9 +128,9 @@ public class Ui {
      * @param taskCount The total number of tasks after the addition.
      */
     public void showAddedTask(Task task, int taskCount) {
-        System.out.println("Got it. I've added this task:");
-        System.out.println("  " + task);
-        System.out.println("Now you have " + taskCount + " tasks in the list.");
+        output.accept("Got it. I've added this task:");
+        output.accept("  " + task);
+        output.accept("Now you have " + taskCount + " tasks in the list.");
     }
 
     /**
@@ -113,9 +140,9 @@ public class Ui {
      * @param taskCount The number of tasks remaining after removal.
      */
     public void showRemovedTask(Task task, int taskCount) {
-        System.out.println("Noted. I've removed this task:");
-        System.out.println("  " + task);
-        System.out.println("Now you have " + taskCount + " tasks in the list.");
+        output.accept("Noted. I've removed this task:");
+        output.accept("  " + task);
+        output.accept("Now you have " + taskCount + " tasks in the list.");
     }
 
     /**
@@ -124,8 +151,8 @@ public class Ui {
      * @param task The task that was marked as done.
      */
     public void showMarkedDone(Task task) {
-        System.out.println("Nice! I've marked this task as done:");
-        System.out.println("  " + task);
+        output.accept("Nice! I've marked this task as done:");
+        output.accept("  " + task);
     }
 
     /**
@@ -134,8 +161,8 @@ public class Ui {
      * @param task The task that was marked as not done.
      */
     public void showMarkedUndone(Task task) {
-        System.out.println("OK, I've marked this task as not done yet:");
-        System.out.println("  " + task);
+        output.accept("OK, I've marked this task as not done yet:");
+        output.accept("  " + task);
     }
 
     /**
@@ -144,7 +171,7 @@ public class Ui {
      * @param message The error details to display.
      */
     public void showError(String message) {
-        System.out.println("OOPS!!! " + message);
-        System.out.println(LINE);
+        output.accept("OOPS!!! " + message);
+        output.accept(LINE);
     }
 }

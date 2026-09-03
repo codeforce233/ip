@@ -4,7 +4,7 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
 
 ```json
 {
-  "app_command": "cd /Users/bytedance/IdeaProjects/ip && rm -rf data out && mkdir -p data && find src/main/java -name '*.java' -print | sort | xargs javac -d out && java -cp out sage.Sage",
+  "app_command": "cd /Users/bytedance/IdeaProjects/ip && rm -rf _temp/ui-test-classes _temp/ui-test-work && mkdir -p _temp/ui-test-classes _temp/ui-test-work && find src/main/java -name '*.java' ! -path '*/sage/gui/*' ! -name 'Launcher.java' -print | sort | xargs javac -d _temp/ui-test-classes && cd _temp/ui-test-work && java -cp /Users/bytedance/IdeaProjects/ip/_temp/ui-test-classes sage.Sage",
   "cases": [
     {
       "id": "todo-list-and-exit",
@@ -52,7 +52,7 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
       "id": "invalid-command-after-valid-task",
       "aim": "Verify an incorrect input does not add a bogus task and keeps previously valid tasks intact.",
       "input": "todo read book\nblah\nlist\nbye\n",
-      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] read book\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nOOPS!!! I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, delete, or bye.\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[T][ ] read book\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] read book\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nOOPS!!! I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, find, mark, unmark, delete, or bye.\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[T][ ] read book\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
     },
     {
       "id": "empty-todo-error",
@@ -64,14 +64,15 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
       "id": "unknown-command-error",
       "aim": "Verify unrecognized commands are rejected with a clear error message.",
       "input": "blah\nbye\n",
-      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nOOPS!!! I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, mark, unmark, delete, or bye.\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nOOPS!!! I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, list, find, mark, unmark, delete, or bye.\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
     }
   ]
 }
-``` 
+```
 
 ## Notes
 
-- The app command compiles the project before execution, then feeds the generated stdin sequence into the CLI.
+- The app command compiles the CLI sources before execution, excluding the JavaFX entry point and GUI package.
+- Each case uses isolated folders under `_temp` so the application's real task data remains untouched.
 - Use the script in `.codex/skills/test-ui/scripts/run-ui-tests.py` to execute the plan.
 - If any case fails, the script exits immediately and prints both expected and actual output.
