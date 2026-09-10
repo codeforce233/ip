@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
     id 'com.gradleup.shadow' version '9.5.1'
 }
 
@@ -11,6 +12,11 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+javafx {
+    version = '17.0.7'
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.graphics']
 }
 
 repositories {
