@@ -15,7 +15,11 @@ public enum TaskType {
     /**
      * A task that spans a start and end time.
      */
-    EVENT("E");
+    EVENT("E"),
+    /**
+     * A snippet of information to remember.
+     */
+    NOTE("N");
 
     private final String symbol;
 

@@ -1,7 +1,24 @@
 # Sage
 
 Sage is a task-management chatbot with a JavaFX chat interface. Commands entered in the window are saved to
-`data/sage.txt`, so tasks remain available the next time Sage starts.
+`data/sage.txt`, so tasks and notes remain available the next time Sage starts.
+
+## Remembering information with notes
+
+Use `note <text>` to save a short, single-line snippet, for example:
+
+```text
+note Waist size: 32 inches
+note Movie to watch: Spirited Away
+list
+find waist
+delete 1
+```
+
+Notes appear as `[N]` entries alongside tasks. Use the number shown by `list` when deleting a note;
+search results are numbered separately. Notes can be searched and deleted but cannot be marked as completed.
+Empty notes are rejected. Unicode and pipe characters (`|`) are preserved when notes are saved and reloaded.
+Notes share the existing 100-entry limit with tasks.
 
 ## Setting up in IntelliJ
 

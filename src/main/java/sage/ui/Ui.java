@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Scanner;
 import java.util.function.Consumer;
 
+import sage.task.Note;
 import sage.task.Task;
 
 /**
@@ -128,6 +129,11 @@ public class Ui {
      * @param taskCount The total number of tasks after the addition.
      */
     public void showAddedTask(Task task, int taskCount) {
+        if (task instanceof Note) {
+            output.accept("Got it. I've saved this note:");
+            output.accept("  " + task);
+            return;
+        }
         output.accept("Got it. I've added this task:");
         output.accept("  " + task);
         output.accept("Now you have " + taskCount + " tasks in the list.");
@@ -140,6 +146,11 @@ public class Ui {
      * @param taskCount The number of tasks remaining after removal.
      */
     public void showRemovedTask(Task task, int taskCount) {
+        if (task instanceof Note) {
+            output.accept("Noted. I've removed this note:");
+            output.accept("  " + task);
+            return;
+        }
         output.accept("Noted. I've removed this task:");
         output.accept("  " + task);
         output.accept("Now you have " + taskCount + " tasks in the list.");

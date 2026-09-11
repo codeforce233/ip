@@ -3,6 +3,7 @@ package sage.command;
 import sage.core.TaskList;
 import sage.exception.SageException;
 import sage.storage.Storage;
+import sage.task.Note;
 import sage.ui.Ui;
 
 /**
@@ -32,6 +33,9 @@ public class UnmarkCommand extends Command {
     public void execute(TaskList tasks, Ui ui, Storage storage) throws SageException {
         if (index <= 0 || index > tasks.size()) {
             throw new SageException("The task number is invalid. Use a number from the current list.");
+        }
+        if (tasks.get(index - 1) instanceof Note) {
+            throw new SageException("Notes cannot be marked or unmarked. Use delete to remove a note.");
         }
         tasks.markUndone(index - 1);
         storage.save(tasks.getTasks());

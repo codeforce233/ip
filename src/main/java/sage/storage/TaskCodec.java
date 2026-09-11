@@ -7,7 +7,9 @@ import java.util.List;
 
 import sage.task.Deadline;
 import sage.task.Event;
+import sage.task.Note;
 import sage.task.Task;
+import sage.task.TaskType;
 import sage.task.Todo;
 
 /**
@@ -39,7 +41,9 @@ final class TaskCodec {
      */
     static Task parse(String line) {
         // Preserve empty trailing fields so legacy records retain their original meaning.
-        String[] fields = line.split(FIELD_SPLIT_PATTERN, -1);
+        // Notes use the entire remainder as text, including any literal pipe characters.
+        int splitLimit = line.stripLeading().startsWith("N") ? COMMON_FIELD_COUNT : -1;
+        String[] fields = line.split(FIELD_SPLIT_PATTERN, splitLimit);
         if (fields.length < COMMON_FIELD_COUNT) {
             throw new IllegalArgumentException("Invalid task format");
         }
@@ -70,6 +74,8 @@ final class TaskCodec {
         switch (fields[TYPE_INDEX].trim()) {
         case "T":
             return new Todo(description);
+        case "N":
+            return new Note(description);
         case "D":
             if (fields.length < DEADLINE_FIELD_COUNT) {
                 throw new IllegalArgumentException("Deadline missing due date");
@@ -92,6 +98,8 @@ final class TaskCodec {
      * @return The record in the existing storage format.
      */
     static String serialize(Task task) {
+        // A type token must agree with the fields available on its runtime class.
+        assert task.getType() == getExpectedType(task) : "Task type must match its serialized fields";
         List<String> fields = new ArrayList<>();
         fields.add(task.getType().getSymbol());
         fields.add("X".equals(task.getStatusIcon()) ? DONE_FLAG : NOT_DONE_FLAG);
@@ -104,6 +112,25 @@ final class TaskCodec {
             fields.add(formatStoredTime(event.getTo(), event.getToText()));
         }
         return String.join(FIELD_SEPARATOR, fields);
+    }
+
+    /**
+     * Determines the record type supported by a task's runtime class.
+     *
+     * @param task The task being serialized.
+     * @return The type whose fields the serializer can write.
+     */
+    private static TaskType getExpectedType(Task task) {
+        if (task instanceof Deadline) {
+            return TaskType.DEADLINE;
+        }
+        if (task instanceof Event) {
+            return TaskType.EVENT;
+        }
+        if (task instanceof Note) {
+            return TaskType.NOTE;
+        }
+        return TaskType.TODO;
     }
 
     /**

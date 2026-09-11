@@ -11,6 +11,7 @@ import sage.command.UnmarkCommand;
 import sage.exception.SageException;
 import sage.task.Deadline;
 import sage.task.Event;
+import sage.task.Note;
 import sage.task.Todo;
 
 /**
@@ -21,7 +22,7 @@ public class Parser {
     private static final String FROM_DELIMITER = " /from ";
     private static final String TO_DELIMITER = " /to ";
     private static final String UNKNOWN_COMMAND_MESSAGE = "I'm sorry, but I don't know what that means. "
-            + "Try a valid command like todo, deadline, event, list, find, mark, unmark, delete, or bye.";
+            + "Try a valid command like todo, deadline, event, note, list, find, mark, unmark, delete, or bye.";
 
     /**
      * Prevents instantiation of this utility class.
@@ -48,6 +49,10 @@ public class Parser {
         }
         if ("list".equals(trimmedCommand)) {
             return new ListCommand();
+        }
+        if ("note".equals(trimmedCommand) || trimmedCommand.startsWith("note ")
+                || trimmedCommand.startsWith("note\t")) {
+            return parseNote(getArguments(trimmedCommand, "note"));
         }
         if (trimmedCommand.startsWith("find")) {
             return parseFind(getArguments(trimmedCommand, "find"));
@@ -111,6 +116,23 @@ public class Parser {
             throw new SageException("The description of a todo cannot be empty. Try: todo <task>");
         }
         return new AddCommand(new Todo(description));
+    }
+
+    /**
+     * Creates a note after validating its single-line text.
+     *
+     * @param text The information to remember.
+     * @return The command that adds the note.
+     * @throws SageException If the note is empty or spans multiple lines.
+     */
+    private static Command parseNote(String text) throws SageException {
+        if (text.isBlank()) {
+            throw new SageException("The text of a note cannot be empty. Try: note <text>");
+        }
+        if (text.contains("\n") || text.contains("\r")) {
+            throw new SageException("Please enter the note on a single line.");
+        }
+        return new AddCommand(new Note(text));
     }
 
     /**
