@@ -11,6 +11,14 @@ import sage.task.TaskType;
 
 class TaskListTest {
     @Test
+    void markDone_invalidIndex_keepsRuntimeValidation() {
+        TaskList tasks = new TaskList();
+
+        assertThrows(IndexOutOfBoundsException.class, () -> tasks.markDone(0));
+        assertThrows(IndexOutOfBoundsException.class, () -> tasks.markUndone(-1));
+    }
+
+    @Test
     void addAndGetTrackTasksInOrder() {
         TaskList tasks = new TaskList();
         Task first = new Task("read", TaskType.TODO);
