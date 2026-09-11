@@ -4,12 +4,44 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import sage.task.Task;
 import sage.task.TaskType;
 
 class TaskListTest {
+    @Test
+    void find_matches_preservesOrderDuplicatesAndIndependentList() {
+        TaskList tasks = new TaskList();
+        Task first = new Task("read book", TaskType.TODO);
+        Task second = new Task("return BOOK", TaskType.TODO);
+        tasks.add(first);
+        tasks.add(new Task("write report", TaskType.TODO));
+        tasks.add(second);
+        tasks.add(first);
+
+        List<Task> matches = tasks.find("  BOOK  ");
+
+        assertEquals(List.of(first, second, first), matches);
+        matches.clear();
+        assertEquals(4, tasks.size());
+        assertSame(first, tasks.get(0));
+    }
+
+    @Test
+    void find_emptyOrUnmatchedKeyword_returnsEmptyList() {
+        TaskList tasks = new TaskList();
+        assertEquals(List.of(), tasks.find("book"));
+        tasks.add(new Task("read book", TaskType.TODO));
+
+        assertEquals(List.of(), tasks.find(null));
+        assertEquals(List.of(), tasks.find(""));
+        assertEquals(List.of(), tasks.find("   "));
+        assertEquals(List.of(), tasks.find("missing"));
+    }
+
     @Test
     void addAndGetTrackTasksInOrder() {
         TaskList tasks = new TaskList();
