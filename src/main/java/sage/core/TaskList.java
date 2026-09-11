@@ -40,6 +40,8 @@ public class TaskList {
             throw new IllegalStateException("You have reached the maximum number of tasks.");
         }
         tasks.add(task);
+        // A successful insertion must preserve the capacity enforced above.
+        assert tasks.size() <= MAX_TASKS : "Adding a task must not exceed the task-list capacity";
     }
 
     /**
@@ -61,6 +63,8 @@ public class TaskList {
      */
     public void markDone(int index) {
         tasks.get(index).markAsDone();
+        // Task subclasses must honor the completion-state contract before callers persist the change.
+        assert "X".equals(tasks.get(index).getStatusIcon()) : "Marked task must be complete";
     }
 
     /**
@@ -71,6 +75,8 @@ public class TaskList {
      */
     public void markUndone(int index) {
         tasks.get(index).markAsNotDone();
+        // Unmarking must restore the incomplete state before callers persist the change.
+        assert " ".equals(tasks.get(index).getStatusIcon()) : "Unmarked task must be incomplete";
     }
 
     /**
