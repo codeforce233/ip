@@ -13,6 +13,7 @@ import java.util.List;
 import sage.task.Deadline;
 import sage.task.Event;
 import sage.task.Task;
+import sage.task.TaskType;
 import sage.task.Todo;
 
 /**
@@ -145,6 +146,10 @@ public class Storage {
      * @return the persisted representation of the task.
      */
     private String serializeTask(Task task) {
+        // The type token must agree with the fields this serializer writes for the runtime class.
+        assert task.getType() == (task instanceof Deadline ? TaskType.DEADLINE
+                : task instanceof Event ? TaskType.EVENT : TaskType.TODO)
+                : "Task type must match its serialized fields";
         StringBuilder builder = new StringBuilder();
         builder.append(task.getType().getSymbol()).append(" | ");
         builder.append(task.getStatusIcon().equals("X") ? "1" : "0").append(" | ");
