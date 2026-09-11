@@ -2,6 +2,7 @@ package sage.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import sage.task.Task;
 
@@ -112,7 +113,7 @@ public class TaskList {
      * A null or blank keyword produces an empty result.
      *
      * @param keyword The keyword to find in task descriptions.
-     * @return A new list containing the matching tasks.
+     * @return A new mutable list containing the matching tasks in their original order.
      */
     public List<Task> find(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
@@ -120,12 +121,8 @@ public class TaskList {
         }
 
         String normalizedKeyword = keyword.trim().toLowerCase();
-        List<Task> matches = new ArrayList<>();
-        for (Task task : tasks) {
-            if (task.getDescription().toLowerCase().contains(normalizedKeyword)) {
-                matches.add(task);
-            }
-        }
-        return matches;
+        return tasks.stream()
+                .filter(task -> task.getDescription().toLowerCase().contains(normalizedKeyword))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 }
