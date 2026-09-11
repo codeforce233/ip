@@ -1,6 +1,7 @@
 package sage.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -13,11 +14,20 @@ import org.junit.jupiter.api.io.TempDir;
 import sage.task.Deadline;
 import sage.task.Event;
 import sage.task.Task;
+import sage.task.TaskType;
 import sage.task.Todo;
 
 class StorageTest {
     @TempDir
     Path tempDir;
+
+    @Test
+    void save_typeWithoutRequiredFields_detectsInternalInconsistency() {
+        Storage storage = new Storage(tempDir.resolve("inconsistent.txt").toString());
+        Task task = new Task("missing deadline fields", TaskType.DEADLINE);
+
+        assertThrows(AssertionError.class, () -> storage.save(List.of(task)));
+    }
 
     @Test
     void saveAndLoad_roundTripsTasks() throws Exception {
