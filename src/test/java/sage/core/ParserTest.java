@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -20,12 +21,82 @@ import sage.command.MarkCommand;
 import sage.command.UnmarkCommand;
 import sage.exception.SageException;
 import sage.storage.Storage;
+import sage.task.Event;
 import sage.task.TaskType;
 import sage.ui.Ui;
 
 class ParserTest {
     @TempDir
     Path tempDir;
+
+    @Test
+    void parse_missingOrInvalidTaskNumbers_preservesErrorMessages() {
+        for (String commandWord : List.of("mark", "unmark", "delete")) {
+            SageException missing = assertThrows(SageException.class, () -> Parser.parse(commandWord + " "));
+            assertEquals("The task number is missing. Try: " + commandWord + " <task number>",
+                    missing.getMessage());
+            for (String argument : List.of("abc", "2147483648")) {
+                SageException invalid = assertThrows(SageException.class,
+                        () -> Parser.parse(commandWord + " " + argument));
+                assertEquals("The task number must be a valid integer. "
+                        + "Try: mark <number>, unmark <number>, or delete <number>", invalid.getMessage());
+            }
+        }
+    }
+
+    @Test
+    void parse_invalidDeadlineAndEventDelimiters_preservesFormatErrors() {
+        for (String input : List.of("deadline", "deadline report", "deadline report /by")) {
+            SageException error = assertThrows(SageException.class, () -> Parser.parse(input));
+            assertEquals("The deadline format is invalid. Try: deadline <task> /by <time>", error.getMessage());
+        }
+        for (String input : List.of("event", "event meeting /from Monday", "event meeting /to Tuesday",
+                "event meeting /to Tuesday /from Monday")) {
+            SageException error = assertThrows(SageException.class, () -> Parser.parse(input));
+            assertEquals("The event format is invalid. Try: event <task> /from <start> /to <end>",
+                    error.getMessage());
+        }
+    }
+
+    @Test
+    void parse_unknownOrNullInput_rejectsCommand() {
+        assertThrows(SageException.class, () -> Parser.parse(null));
+        for (String input : List.of("   ", "unknown", "list extra", "bye extra")) {
+            assertThrows(SageException.class, () -> Parser.parse(input), input);
+        }
+    }
+
+    @Test
+    void parse_existingPrefixAndWhitespaceSyntax_preservesArguments() throws SageException {
+        TaskList tasks = new TaskList();
+        Storage storage = new Storage(tempDir.resolve("prefix.txt").toString());
+        Ui ui = new Ui();
+
+        Parser.parse("  todo   read book  ").execute(tasks, ui, storage);
+        Parser.parse("todowrite notes").execute(tasks, ui, storage);
+        Parser.parse("mark1").execute(tasks, ui, storage);
+
+        assertEquals("read book", tasks.get(0).getDescription());
+        assertEquals("write notes", tasks.get(1).getDescription());
+        assertEquals("X", tasks.get(0).getStatusIcon());
+    }
+
+    @Test
+    void parse_eventWithFreeTextOrEqualTimes_preservesAcceptedValues() throws SageException {
+        TaskList tasks = new TaskList();
+        Storage storage = new Storage(tempDir.resolve("events.txt").toString());
+        Ui ui = new Ui();
+
+        Parser.parse("event  meeting  /from Monday /to Tuesday").execute(tasks, ui, storage);
+        Parser.parse("event reminder /from 2025-01-02 /to 2025-01-02").execute(tasks, ui, storage);
+
+        Event meeting = assertInstanceOf(Event.class, tasks.get(0));
+        assertEquals("meeting", meeting.getDescription());
+        assertEquals("Monday", meeting.getFromText());
+        assertEquals("Tuesday", meeting.getToText());
+        Event reminder = assertInstanceOf(Event.class, tasks.get(1));
+        assertEquals(reminder.getFrom(), reminder.getTo());
+    }
 
     @Test
     void parse_validCommandsReturnExpectedCommandTypes() throws SageException {
