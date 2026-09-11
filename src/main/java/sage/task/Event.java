@@ -1,11 +1,7 @@
 package sage.task;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.List;
 
 /**
  * Represents a task that spans a start time and an end time.
@@ -30,17 +26,6 @@ public class Event extends Task {
      * Text retained as the event's stored end representation.
      */
     protected String toText;
-
-    private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy, h:mma");
-    private static final DateTimeFormatter DATE_ONLY_DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy");
-    private static final List<DateTimeFormatter> INPUT_FORMATTERS = List.of(
-            DateTimeFormatter.ofPattern("d/M/yyyy HHmm"),
-            DateTimeFormatter.ofPattern("d/M/yyyy HH:mm"),
-            DateTimeFormatter.ofPattern("d/M/yyyy"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    );
 
     /**
      * Creates an event from raw text for its start and end times.
@@ -115,45 +100,7 @@ public class Event extends Task {
      * @return the parsed time, or {@code null} if the input is not in a supported format.
      */
     public static LocalDateTime parseDateTime(String rawValue) {
-        String value = rawValue == null ? "" : rawValue.trim();
-        if (value.isEmpty()) {
-            return null;
-        }
-
-        for (DateTimeFormatter formatter : INPUT_FORMATTERS) {
-            try {
-                try {
-                    return LocalDateTime.parse(value, formatter);
-                } catch (DateTimeParseException ignored) {
-                    LocalDate date = LocalDate.parse(value, formatter);
-                    return LocalDateTime.of(date, LocalTime.MIDNIGHT);
-                }
-            } catch (DateTimeParseException ignored) {
-                // Try the next supported format.
-            }
-        }
-
-        try {
-            return LocalDateTime.parse(value);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Formats a date-time for terminal display.
-     *
-     * @param dateTime the value to format.
-     * @return the formatted display string, or an empty string if the value is {@code null}.
-     */
-    private String formatDateTime(LocalDateTime dateTime) {
-        if (dateTime == null) {
-            return "";
-        }
-        if (dateTime.toLocalTime().equals(LocalTime.MIDNIGHT)) {
-            return dateTime.toLocalDate().format(DATE_ONLY_DISPLAY_FORMATTER);
-        }
-        return dateTime.format(DISPLAY_FORMATTER);
+        return TaskDateTime.parse(rawValue);
     }
 
     /**
@@ -164,7 +111,7 @@ public class Event extends Task {
     @Override
     public String toString() {
         return "[" + type.getSymbol() + "][" + getStatusIcon() + "] " + description
-                + " (from: " + (from != null ? formatDateTime(from) : fromText)
-                + " to: " + (to != null ? formatDateTime(to) : toText) + ")";
+                + " (from: " + TaskDateTime.format(from, fromText)
+                + " to: " + TaskDateTime.format(to, toText) + ")";
     }
 }

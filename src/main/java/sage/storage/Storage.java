@@ -6,14 +6,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import sage.task.Deadline;
-import sage.task.Event;
 import sage.task.Task;
-import sage.task.TaskType;
+
 import sage.task.Todo;
 
 /**
@@ -53,7 +50,7 @@ public class Storage {
                 if (trimmed.isEmpty()) {
                     continue;
                 }
-                loadedTasks.add(parseTaskLine(trimmed));
+                loadedTasks.add(TaskCodec.parse(trimmed));
             }
             return loadedTasks;
         } catch (IOException e) {
@@ -79,7 +76,7 @@ public class Storage {
             }
             try (BufferedWriter writer = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
                 for (Task task : tasks) {
-                    writer.write(serializeTask(task));
+                    writer.write(TaskCodec.serialize(task));
                     writer.newLine();
                 }
             }

@@ -62,4 +62,26 @@ class StorageTest {
         Storage storage = new Storage(file.toString());
         assertTrue(storage.load().isEmpty());
     }
+
+    @Test
+    void load_invalidRecordAfterValidRecord_discardsPartialResults() throws Exception {
+        Path file = tempDir.resolve("partially-corrupt.txt");
+        Files.write(file, List.of("T | 1 | read", "E | 0 | missing times"));
+
+        assertTrue(new Storage(file.toString()).load().isEmpty());
+    }
+
+    @Test
+    void saveAndLoad_freeTextTimesAndBlankLines_preservesTasks() throws Exception {
+        Path file = tempDir.resolve("free-text.txt");
+        Storage storage = new Storage(file.toString());
+        storage.save(List.of(new Deadline("submit", "Sunday"), new Event("meet", "Monday", "Tuesday")));
+        List<String> records = Files.readAllLines(file);
+        Files.write(file, List.of("", records.get(0), "  ", records.get(1)));
+
+        List<Task> loaded = storage.load();
+        assertEquals(2, loaded.size());
+        assertEquals("[D][ ] submit (by: Sunday)", loaded.get(0).toString());
+        assertEquals("[E][ ] meet (from: Monday to: Tuesday)", loaded.get(1).toString());
+    }
 }

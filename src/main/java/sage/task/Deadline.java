@@ -1,11 +1,7 @@
 package sage.task;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.List;
 
 /**
  * Represents a task that must be done by a specific date and time.
@@ -20,17 +16,6 @@ public class Deadline extends Task {
      * Text retained as the deadline's stored representation.
      */
     protected String byText;
-
-    private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy, h:mma");
-    private static final DateTimeFormatter DATE_ONLY_DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy");
-    private static final List<DateTimeFormatter> INPUT_FORMATTERS = List.of(
-            DateTimeFormatter.ofPattern("d/M/yyyy HHmm"),
-            DateTimeFormatter.ofPattern("d/M/yyyy HH:mm"),
-            DateTimeFormatter.ofPattern("d/M/yyyy"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    );
 
     /**
      * Creates a deadline from a user-provided date string.
@@ -81,44 +66,7 @@ public class Deadline extends Task {
      * @return the parsed time, or {@code null} if the input is not in a supported format.
      */
     public static LocalDateTime parseDateTime(String rawValue) {
-        String value = rawValue == null ? "" : rawValue.trim();
-        if (value.isEmpty()) {
-            return null;
-        }
-
-        for (DateTimeFormatter formatter : INPUT_FORMATTERS) {
-            try {
-                try {
-                    return LocalDateTime.parse(value, formatter);
-                } catch (DateTimeParseException ignored) {
-                    LocalDate date = LocalDate.parse(value, formatter);
-                    return LocalDateTime.of(date, LocalTime.MIDNIGHT);
-                }
-            } catch (DateTimeParseException ignored) {
-                // Try the next supported format.
-            }
-        }
-
-        try {
-            return LocalDateTime.parse(value);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Formats the internal deadline value for display in the UI.
-     *
-     * @return the formatted deadline text.
-     */
-    private String formatBy() {
-        if (by == null) {
-            return byText;
-        }
-        if (by.toLocalTime().equals(LocalTime.MIDNIGHT)) {
-            return by.toLocalDate().format(DATE_ONLY_DISPLAY_FORMATTER);
-        }
-        return by.format(DISPLAY_FORMATTER);
+        return TaskDateTime.parse(rawValue);
     }
 
     /**
@@ -128,6 +76,7 @@ public class Deadline extends Task {
      */
     @Override
     public String toString() {
-        return "[" + type.getSymbol() + "][" + getStatusIcon() + "] " + description + " (by: " + formatBy() + ")";
+        return "[" + type.getSymbol() + "][" + getStatusIcon() + "] " + description
+                + " (by: " + TaskDateTime.format(by, byText) + ")";
     }
 }
