@@ -2,11 +2,35 @@ name: Java CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: '1'
+
 jobs:
   build:
+    timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - platform: ubuntu-24.04
+            macArm64: 'false'
+            jar: sage.jar
+            macArchitecture: x64
+          - platform: windows-2025
+            macArm64: 'false'
+            jar: sage.jar
+            macArchitecture: x64
+          - platform: macos-15-intel
+            macArm64: 'false'
+            jar: sage.jar
+            macArchitecture: x64
+          - platform: macos-15
+            macArm64: 'true'
+            jar: sage-mac-arm64.jar
+            macArchitecture: arm64
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -23,6 +47,36 @@ jobs:
           java-version: '25'
           java-package: jdk+fx
 
-      - name: Build and check with Gradle
-        run: ./gradlew check
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
 
+      - name: Verify acceptance runner failure handling
+        run: python -m unittest discover -s test -p "test_*.py"
+
+      - name: Build, test, and verify coverage
+        shell: bash
+        run: ./gradlew --no-daemon clean check shadowJar -PmacArm64=${{ matrix.macArm64 }}
+
+      - name: Verify packaged resources and persistence
+        run: python scripts/check-release.py --jar build/libs/${{ matrix.jar }} --mac-architecture ${{ matrix.macArchitecture }}
+
+      - name: Run exact CLI acceptance scenarios against the JAR
+        run: python .codex/skills/test-ui/scripts/run-ui-tests.py --plan test/ui-test-plan.md --jar build/libs/${{ matrix.jar }}
+
+      - name: Retain test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-${{ matrix.platform }}
+          path: |
+            build/reports/tests/test/
+            build/reports/jacoco/test/
+
+      - name: Retain verified release JAR
+        uses: actions/upload-artifact@v7
+        with:
+          name: sage-${{ matrix.platform }}
+          path: build/libs/${{ matrix.jar }}
+          if-no-files-found: error

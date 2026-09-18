@@ -1,7 +1,55 @@
 # Sage
 
-Sage is a task-management chatbot with a JavaFX chat interface. Commands entered in the window are saved to
-`data/sage.txt`, so tasks and notes remain available the next time Sage starts.
+Sage is a calm, practical companion for tasks and small things worth remembering.
+Its compact JavaFX interface keeps your commands brief and gives replies room to breathe.
+Tasks and notes are saved to `data/sage.txt` relative to the folder from which you launch Sage.
+
+## Quick start
+
+Use **Java 25**. Build with `./gradlew clean check shadowJar`, then launch with
+`java -jar build/libs/sage.jar`. On Windows, use `gradlew.bat` for Gradle commands.
+See the [release guide](docs/release.md) for the Apple Silicon build, supported platforms,
+packaging checks, and troubleshooting. The JAR bundles its JavaFX dependencies, but not a Java runtime.
+
+The window can be resized. Press Enter or select **Send** to submit a command, and select **Commands**
+for a command reference. Errors have a separate labelled card, so they are distinguishable without
+relying only on colour. Type `bye` to close Sage.
+
+## Commands
+
+| Command | Example |
+| --- | --- |
+| Add a task | `todo Read one chapter` |
+| Add a deadline | `deadline Submit report /by 2026-10-01 18:00` |
+| Add an event | `event Study session /from 2026-10-01 14:00 /to 2026-10-01 15:00` |
+| Save a note | `note Movie to watch: Spirited Away` |
+| List all entries | `list` |
+| Search descriptions | `find chapter` |
+| Complete a task | `mark 1` |
+| Reopen a task | `unmark 1` |
+| Delete an entry | `delete 1` |
+| Exit | `bye` |
+
+Command names are lowercase. Leading/trailing spaces and extra spacing between the command and
+its arguments are accepted. Parameters such as `/by`, `/from`, and `/to` must appear exactly once
+where required. Use `list` to check an entry's number before changing it.
+
+Dates support `yyyy-MM-dd` and `d/M/yyyy`, optionally followed by `HH:mm` or `HHmm` (24-hour time).
+Impossible numeric dates and events ending at or before their start are rejected.
+Text such as `Sunday` is also accepted for convenience, but Sage cannot compare natural-language
+times or schedule reminders. New entries with identical details are rejected, even if the existing task is complete.
+Duplicate entries saved by older Sage versions remain readable.
+
+## Keeping your data safe
+
+A missing data file is normal on first launch; Sage creates it when you save your first entry.
+If Sage cannot read existing data, it shows a warning and blocks changes to avoid overwriting it.
+Back up the file, fix its contents or permissions, then restart Sage. A failed save is reported as an
+error and does not leave an unsaved change in the list. Do not edit the file while Sage is running
+or run two copies against the same file.
+
+Keep personal data out of Git: the `data/` directory, build products, and local settings are ignored.
+Do not include your own data file when sharing the JAR. Keep independent backups of important data.
 
 ## Remembering information with notes
 
@@ -16,7 +64,7 @@ delete 1
 ```
 
 Notes appear as `[N]` entries alongside tasks. Use the number shown by `list` when deleting a note;
-search results are numbered separately. Notes can be searched and deleted but cannot be marked as completed.
+search results retain these same numbers. Notes can be searched and deleted but cannot be marked as completed.
 Empty notes are rejected. Unicode and pipe characters (`|`) are preserved when notes are saved and reloaded.
 Notes share the existing 100-entry limit with tasks.
 

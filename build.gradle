@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'jacoco'
     id 'com.gradleup.shadow' version '9.5.1'
 }
 
@@ -14,10 +14,13 @@ java {
     }
 }
 
-javafx {
-    version = '17.0.7'
-    modules = ['javafx.controls', 'javafx.fxml', 'javafx.graphics']
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }
+
+// macOS Intel and ARM libraries share filenames, so package them separately.
+def isMacArm64 = providers.gradleProperty('macArm64').map { it.toBoolean() }.getOrElse(false)
+def macJavaFxPlatform = isMacArm64 ? 'mac-aarch64' : 'mac'
 
 repositories {
     mavenCentral()
@@ -28,22 +31,30 @@ dependencies {
     String jUnitVersion = '5.14.4'
 
     implementation("org.openjfx:javafx-base:${javaFxVersion}:win")
-    implementation("org.openjfx:javafx-base:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-base:${javaFxVersion}:${macJavaFxPlatform}")
     implementation("org.openjfx:javafx-base:${javaFxVersion}:linux")
     implementation("org.openjfx:javafx-controls:${javaFxVersion}:win")
-    implementation("org.openjfx:javafx-controls:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-controls:${javaFxVersion}:${macJavaFxPlatform}")
     implementation("org.openjfx:javafx-controls:${javaFxVersion}:linux")
     implementation("org.openjfx:javafx-fxml:${javaFxVersion}:win")
-    implementation("org.openjfx:javafx-fxml:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-fxml:${javaFxVersion}:${macJavaFxPlatform}")
     implementation("org.openjfx:javafx-fxml:${javaFxVersion}:linux")
     implementation("org.openjfx:javafx-graphics:${javaFxVersion}:win")
-    implementation("org.openjfx:javafx-graphics:${javaFxVersion}:mac")
+    implementation("org.openjfx:javafx-graphics:${javaFxVersion}:${macJavaFxPlatform}")
     implementation("org.openjfx:javafx-graphics:${javaFxVersion}:linux")
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
 
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.4'
+}
+
+// All required JavaFX modules are listed above. Their POMs must not add a second,
+// host-selected native architecture when building the other release variant.
+configurations.implementation.dependencies.each { dependency ->
+    if (dependency.group == 'org.openjfx') {
+        dependency.transitive = false
+    }
 }
 
 test {
@@ -61,6 +72,44 @@ test {
     }
 }
 
+jacoco {
+    // This release officially supports Java 25 class files.
+    toolVersion = '0.8.14'
+}
+
+def testableClasses = sourceSets.main.output.asFileTree.matching {
+    include '**/*.class'
+    exclude 'sage/gui/**', 'sage/Launcher.class'
+}
+
+jacocoTestReport {
+    dependsOn test
+    classDirectories.setFrom(testableClasses)
+    reports {
+        html.required = true
+        xml.required = true
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn test
+    classDirectories.setFrom(testableClasses)
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                minimum = 0.90
+            }
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.80
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestReport, jacocoTestCoverageVerification
+
 application {
     mainClass.set('sage.Launcher')
 }
@@ -73,7 +122,7 @@ jar {
 }
 
 shadowJar {
-    archiveFileName = 'sage.jar'
+    archiveFileName = isMacArm64 ? 'sage-mac-arm64.jar' : 'sage.jar'
     mergeServiceFiles()
 }
 
