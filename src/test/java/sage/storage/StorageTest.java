@@ -1,11 +1,13 @@
 package sage.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -141,5 +143,61 @@ class StorageTest {
         assertEquals("repaired", storage.load().get(0).getDescription());
         storage.save(List.of(new Todo("new item")));
         assertEquals("new item", storage.load().get(0).getDescription());
+    }
+
+    @Test
+    void save_serializationFailure_preservesExistingFileAndLeavesNoTemporaryFiles() throws Exception {
+        Path file = tempDir.resolve("protected.txt");
+        Storage storage = new Storage(file.toString());
+        storage.save(List.of(new Todo("original task")));
+        byte[] original = Files.readAllBytes(file);
+
+        assertThrows(AssertionError.class,
+                () -> storage.save(List.of(new Task("missing event fields", TaskType.EVENT))));
+
+        assertArrayEquals(original, Files.readAllBytes(file));
+        assertEquals("original task", storage.load().get(0).getDescription());
+        try (var files = Files.list(tempDir)) {
+            assertEquals(List.of(file), files.toList());
+        }
+    }
+
+    @Test
+    void load_invalidUtf8_reportsErrorAndPreservesOriginalBytes() throws Exception {
+        Path file = tempDir.resolve("invalid-encoding.txt");
+        byte[] invalidBytes = {(byte) 0xc3, (byte) 0x28};
+        Files.write(file, invalidBytes);
+        Storage storage = new Storage(file.toString());
+
+        assertThrows(SageException.class, storage::load);
+        assertThrows(SageException.class, () -> storage.save(List.of(new Todo("replacement"))));
+        assertArrayEquals(invalidBytes, Files.readAllBytes(file));
+    }
+
+    @Test
+    void save_lastItemRemoved_persistsAnEmptyListWithoutTemporaryFiles() throws Exception {
+        Path file = tempDir.resolve("emptied.txt");
+        Storage storage = new Storage(file.toString());
+        storage.save(List.of(new Todo("finish")));
+        storage.save(List.of());
+
+        assertTrue(storage.load().isEmpty());
+        assertEquals("", Files.readString(file));
+        try (var files = Files.list(tempDir)) {
+            assertEquals(List.of(file), files.toList());
+        }
+    }
+
+    @Test
+    void save_explicitDateTimeObjects_roundTripsWithoutLosingTime() throws Exception {
+        LocalDateTime start = LocalDateTime.of(2026, 9, 18, 14, 30, 45);
+        List<Task> tasks = List.of(new Deadline("submit", start), new Event("meeting", start, start.plusHours(1)));
+        Storage storage = new Storage(tempDir.resolve("explicit-times.txt").toString());
+        storage.save(tasks);
+
+        List<Task> reloaded = storage.load();
+        assertEquals(tasks.stream().map(Object::toString).toList(), reloaded.stream().map(Object::toString).toList());
+        assertEquals(start, ((Deadline) reloaded.get(0)).getBy());
+        assertEquals(start.plusHours(1), ((Event) reloaded.get(1)).getTo());
     }
 }

@@ -29,6 +29,18 @@ class TaskDateTimeTest {
     }
 
     @Test
+    void parse_repeatedSpacesAndTabsBetweenDateAndTime_preservesTheTime() {
+        LocalDateTime expected = LocalDateTime.of(2026, 9, 18, 14, 30);
+        for (String value : List.of("2026-09-18   1430", "2026-09-18\t14:30",
+                "18/9/2026 \t 1430", " 18/9/2026 \t 14:30  ")) {
+            assertEquals(expected, TaskDateTime.parse(value), value);
+            TaskDateTime.validate(value);
+        }
+        assertNull(TaskDateTime.parse("2026-09-18 \t 24:00"));
+        assertThrows(IllegalArgumentException.class, () -> TaskDateTime.validate("2026-09-18 \t 24:00"));
+    }
+
+    @Test
     void parse_unrecognizedOrEmptyInput_returnsNull() {
         assertNull(TaskDateTime.parse(null));
         for (String input : List.of("", "   ", "Sunday", "2025-13-14", "2025-02-14 25:00")) {

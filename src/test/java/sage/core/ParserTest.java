@@ -146,7 +146,8 @@ class ParserTest {
                 "deadline task /from Sunday /by Monday", "event /from Monday /to Tuesday",
                 "event meeting /from /to Tuesday", "event meeting /from Monday /to",
                 "event meeting /from Monday /from Tuesday /to Wednesday",
-                "event meeting /from Monday /to Tuesday /to Wednesday", "todo first\nsecond", "todo bad\u0000text")) {
+                "event meeting /from Monday /to Tuesday /to Wednesday", "todo first\nsecond",
+                "note first\rsecond", "todo bad\u0000text")) {
             assertThrows(SageException.class, () -> Parser.parse(input), input);
         }
     }
@@ -162,6 +163,30 @@ class ParserTest {
         Event event = assertInstanceOf(Event.class, tasks.get(1));
         assertEquals("Mon 2pm", event.getFromText());
         assertEquals("4pm", event.getToText());
+    }
+
+    @Test
+    void parse_whitespaceWithinDateTimes_preservesNumericTimes() throws SageException {
+        TaskList tasks = new TaskList();
+        Storage storage = new Storage(tempDir.resolve("date-whitespace.txt").toString());
+        Parser.parse("event meeting /from 2026-09-18   1400 /to 18/9/2026\t15:00")
+                .execute(tasks, new Ui(), storage);
+
+        Event event = assertInstanceOf(Event.class, tasks.get(0));
+        assertEquals(14, event.getFrom().getHour());
+        assertEquals(15, event.getTo().getHour());
+    }
+
+    @Test
+    void parse_mixedNumericAndNaturalLanguageTimes_retainsUncomparableEnd() throws SageException {
+        TaskList tasks = new TaskList();
+        Storage storage = new Storage(tempDir.resolve("mixed-times.txt").toString());
+        Parser.parse("event meeting /from 2026-09-18 1400 /to tomorrow")
+                .execute(tasks, new Ui(), storage);
+
+        Event event = assertInstanceOf(Event.class, tasks.get(0));
+        assertEquals(14, event.getFrom().getHour());
+        assertEquals("tomorrow", event.getToText());
     }
 
     @Test

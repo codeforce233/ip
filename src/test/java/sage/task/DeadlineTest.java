@@ -30,4 +30,23 @@ class DeadlineTest {
         assertEquals(LocalDateTime.of(2025, 1, 2, 0, 0), dateOnlyDeadline.getBy());
         assertTrue(dateOnlyDeadline.toString().contains("Jan 2 2025"));
     }
+
+    @Test
+    void constructor_explicitDateTime_retainsIsoStorageTextAndReadableDisplay() {
+        LocalDateTime time = LocalDateTime.of(2026, 9, 18, 14, 30);
+        Deadline deadline = new Deadline("report", time);
+
+        assertEquals(time, deadline.getBy());
+        assertEquals("2026-09-18T14:30:00", deadline.getByText());
+        assertEquals("[D][ ] report (by: Sep 18 2026, 2:30PM)", deadline.toString());
+    }
+
+    @Test
+    void constructor_missingExplicitDateTime_retainsEmptyFallback() {
+        Deadline deadline = new Deadline("report", (LocalDateTime) null);
+
+        assertNull(deadline.getBy());
+        assertEquals("", deadline.getByText());
+        assertEquals("[D][ ] report (by: )", deadline.toString());
+    }
 }

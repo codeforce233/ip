@@ -114,6 +114,12 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
       "aim": "Use practical, gentle guidance for an empty list and unsuccessful search.",
       "input": "list\nfind missing\nbye\n",
       "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello, I'm Sage.\nA little clarity, one step at a time.\nTry todo <task>, note <text>, or list.\n____________________________________________________________\n____________________________________________________________\nA clear page. Add a task with todo <task> or a note with note <text>.\n____________________________________________________________\n____________________________________________________________\nNo matches this time. Try another word from the description.\n____________________________________________________________\n____________________________________________________________\n____________________________________________________________\nTake care. One step at a time.\n____________________________________________________________\n"
+    },
+    {
+      "id": "date-time-internal-whitespace",
+      "aim": "Accept repeated spaces and tabs between a numeric date and time without dropping the time.",
+      "input": "deadline report /by 2026-09-18   \t1430\nlist\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello, I'm Sage.\nA little clarity, one step at a time.\nTry todo <task>, note <text>, or list.\n____________________________________________________________\n____________________________________________________________\nNoted. One less thing to remember:\n  [D][ ] report (by: Sep 18 2026, 2:30PM)\n1 item in your list.\n____________________________________________________________\n____________________________________________________________\nHere's your list:\n1. [D][ ] report (by: Sep 18 2026, 2:30PM)\n____________________________________________________________\n____________________________________________________________\nTake care. One step at a time.\n____________________________________________________________\n"
     }
   ]
 }

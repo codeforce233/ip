@@ -3,6 +3,7 @@ package sage.storage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -74,6 +75,27 @@ class TaskCodecTest {
             assertEquals(task.toString(), parsed.toString());
             assertEquals(description, parsed.getDescription());
         }
+    }
+
+    @Test
+    void serialize_eachSpecialCharacterIndependently_usesEscapedFormatWithoutDataLoss() {
+        for (String text : List.of("left | right", "folder\\file", "first\nsecond", "first\rsecond")) {
+            String record = TaskCodec.serialize(new Todo(text));
+
+            assertTrue(record.startsWith("V2 | "), text);
+            assertEquals(text, TaskCodec.parse(record).getDescription());
+            assertEquals(1, record.lines().count());
+        }
+    }
+
+    @Test
+    void parse_numericStartAndNaturalLanguageEnd_keepsOriginalEndText() {
+        Event event = assertInstanceOf(Event.class,
+                TaskCodec.parse("E | 0 | meeting | 2026-09-18T14:00:00 | tomorrow"));
+
+        assertEquals(14, event.getFrom().getHour());
+        assertEquals("tomorrow", event.getToText());
+        assertEquals("E | 0 | meeting | 2026-09-18T14:00:00 | tomorrow", TaskCodec.serialize(event));
     }
 
     @Test

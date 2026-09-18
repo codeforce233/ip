@@ -2,6 +2,7 @@ package sage.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -75,6 +76,27 @@ class UiTest {
 
         assertEquals(List.of("A clear page. Add a task with todo <task> or a note with note <text>.", Ui.LINE,
                 "No matches this time. Try another word from the description.", Ui.LINE), output);
+    }
+
+    @Test
+    void outputOnlyInterface_rejectsInputAndMissingConsumer() {
+        List<String> output = new ArrayList<>();
+        Ui ui = new Ui(output::add);
+
+        assertThrows(IllegalStateException.class, ui::readCommand);
+        assertThrows(NullPointerException.class, () -> new Ui(null));
+    }
+
+    @Test
+    void showWelcome_sendsTheSharedGreetingToAnyOutputDestination() {
+        List<String> output = new ArrayList<>();
+        Ui ui = new Ui(output::add);
+
+        ui.showWelcome();
+
+        assertTrue(output.containsAll(Ui.WELCOME_MESSAGE.lines().toList()));
+        assertEquals(Ui.LINE, output.getFirst());
+        assertEquals(Ui.LINE, output.getLast());
     }
 
     private String captureOutput(Runnable action) {

@@ -157,17 +157,53 @@ class SageTest {
 
     @Test
     void run_endOfInput_exitsCleanlyWithoutInventingACommand() {
+        String output = runConsole(tempDir.resolve("tasks.txt"), "");
+
+        assertTrue(output.contains("Sage"));
+        assertFalse(output.contains("Let's try that again."));
+    }
+
+    @Test
+    void run_commandsAndErrors_continuesUntilBye() {
+        String output = runConsole(tempDir.resolve("tasks.txt"),
+                "todo Read chapter\nmark 99\nlist extra\nfind chapter\nlist\nbye\ntodo Must not execute\n");
+
+        assertTrue(output.contains("1. [T][ ] Read chapter"));
+        assertTrue(output.contains("The task number is invalid."));
+        assertTrue(output.contains("The list command takes no extra arguments."));
+        assertTrue(output.contains("Here's what I found:"));
+        assertTrue(output.contains("Take care. One step at a time."));
+        assertFalse(output.contains("Must not execute"));
+    }
+
+    @Test
+    void run_corruptData_reportsStartupFailureAndKeepsOriginal() throws Exception {
+        Path file = tempDir.resolve("tasks.txt");
+        Files.writeString(file, "invalid data");
+
+        String output = runConsole(file, "todo Do not replace the file\nbye\n");
+
+        assertTrue(output.contains("I couldn't read the saved data."));
+        assertTrue(output.contains("Changes are disabled"));
+        assertEquals("invalid data", Files.readString(file));
+    }
+
+    /**
+     * Runs a complete console session while restoring the process streams afterwards.
+     *
+     * @param dataFile The disposable data file for this test.
+     * @param commands The simulated keyboard input.
+     * @return Every line printed during the session.
+     */
+    private String runConsole(Path dataFile, String commands) {
         InputStream originalIn = System.in;
         PrintStream originalOut = System.out;
         ByteArrayOutputStream captured = new ByteArrayOutputStream();
-        System.setIn(new ByteArrayInputStream(new byte[0]));
+        System.setIn(new ByteArrayInputStream(commands.getBytes(StandardCharsets.UTF_8)));
         System.setOut(new PrintStream(captured, true, StandardCharsets.UTF_8));
         try {
-            new Sage(tempDir.resolve("tasks.txt").toString()).run();
-
-            String output = captured.toString(StandardCharsets.UTF_8);
-            assertTrue(output.contains("Sage"));
-            assertFalse(output.contains("Let's try that again."));
+            new Sage(dataFile.toString()).run();
+            return captured.toString(StandardCharsets.UTF_8);
         } finally {
             System.setIn(originalIn);
             System.setOut(originalOut);

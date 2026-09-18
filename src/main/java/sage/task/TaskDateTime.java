@@ -32,12 +32,13 @@ public final class TaskDateTime {
 
     /**
      * Parses supported input formats, treating dates without a time as midnight.
+     * Repeated spaces and tabs between date and time are accepted.
      *
      * @param rawValue The date or date-time text to parse.
      * @return The parsed value, or null for blank or unsupported text.
      */
     public static LocalDateTime parse(String rawValue) {
-        String value = rawValue == null ? "" : rawValue.trim();
+        String value = rawValue == null ? "" : rawValue.strip().replaceAll("[ \\t]+", " ");
         if (value.isEmpty()) {
             return null;
         }

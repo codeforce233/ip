@@ -29,4 +29,28 @@ class EventTest {
         assertTrue(event.toString().contains("Feb 14 2025, 9:00AM"));
         assertTrue(event.toString().contains("Feb 14 2025, 10:30AM"));
     }
+
+    @Test
+    void constructor_explicitDateTimes_retainsIsoTextAndReadableDisplay() {
+        LocalDateTime start = LocalDateTime.of(2026, 9, 18, 14, 30);
+        LocalDateTime end = start.plusHours(1);
+        Event event = new Event("meeting", start, end);
+
+        assertEquals(start, event.getFrom());
+        assertEquals(end, event.getTo());
+        assertEquals("2026-09-18T14:30:00", event.getFromText());
+        assertEquals("2026-09-18T15:30:00", event.getToText());
+        assertEquals("[E][ ] meeting (from: Sep 18 2026, 2:30PM to: Sep 18 2026, 3:30PM)", event.toString());
+    }
+
+    @Test
+    void constructor_missingExplicitDateTimes_retainsEmptyFallbacks() {
+        Event event = new Event("meeting", (LocalDateTime) null, null);
+
+        assertNull(event.getFrom());
+        assertNull(event.getTo());
+        assertEquals("", event.getFromText());
+        assertEquals("", event.getToText());
+        assertEquals("[E][ ] meeting (from:  to: )", event.toString());
+    }
 }
