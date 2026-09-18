@@ -50,8 +50,7 @@ the ARM64 macOS variant. Check the release description if a supplier has renamed
 ### 2. Obtain and launch Sage
 
 Check the project's [Releases page](https://github.com/codeforce233/ip/releases) for a suitable JAR.
-If a release is not available, follow the [build instructions](release.md#choose-the-correct-build)
-or obtain a build from the project maintainer.
+If a release is not available, obtain a build from the project maintainer.
 
 1. Put `sage.jar` in a folder where you have permission to create files.
 2. Open a terminal in that folder.
@@ -307,7 +306,7 @@ Keep backups: these protections do not replace them.
 | A change cannot be saved | Check write permission for the launch folder and available disk space. The attempted change has not been applied; retry after fixing the cause. |
 | Previous entries appear missing | Launch from the same folder as before. Sage may be looking at a different `data/sage.txt`. |
 | Java version error | Confirm `java -version` shows Java 25 and the terminal uses the intended installation. |
-| Native-library or GUI startup error | Check the build's macOS architecture and Java architecture. Linux needs a desktop display and GTK libraries. See the [release guide](release.md). |
+| Native-library or GUI startup error | Check the build's macOS architecture and Java architecture. Linux needs a desktop display and GTK libraries. Ask the project maintainer for a compatible build if needed. |
 
 
 ## Frequently asked questions
@@ -333,5 +332,4 @@ Do not run it alongside the GUI against that file.
 
 ---
 
-[Source code and issues](https://github.com/codeforce233/ip) · [Build and release guide](release.md) ·
-[Testing notes](testing.md)
+[Source code and issues](https://github.com/codeforce233/ip)

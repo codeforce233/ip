@@ -19,7 +19,9 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 // macOS Intel and ARM libraries share filenames, so package them separately.
-def isMacArm64 = providers.gradleProperty('macArm64').map { it.toBoolean() }.getOrElse(false)
+def isMacArm64 = providers.gradleProperty('macArm64')
+        .map { it.toBoolean() }
+        .getOrElse(System.getProperty("os.arch") in ["aarch64", "arm64"])
 def macJavaFxPlatform = isMacArm64 ? 'mac-aarch64' : 'mac'
 
 repositories {
@@ -122,7 +124,7 @@ jar {
 }
 
 shadowJar {
-    archiveFileName = isMacArm64 ? 'sage-mac-arm64.jar' : 'sage.jar'
+    archiveFileName = 'sage.jar'
     mergeServiceFiles()
 }
 

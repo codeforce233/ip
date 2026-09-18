@@ -8,8 +8,8 @@ Tasks and notes are saved to `data/sage.txt` relative to the folder from which y
 
 Use **Java 25**. Build with `./gradlew clean check shadowJar`, then launch with
 `java -jar build/libs/sage.jar`. On Windows, use `gradlew.bat` for Gradle commands.
-See the [release guide](docs/release.md) for the Apple Silicon build, supported platforms,
-packaging checks, and troubleshooting. The JAR bundles its JavaFX dependencies, but not a Java runtime.
+See the [user guide](docs/README.md) for supported platforms and troubleshooting.
+The JAR bundles its JavaFX dependencies, but not a Java runtime.
 
 The window can be resized. Press Enter or select **Send** to submit a command, and select **Commands**
 for a command reference. Errors have a separate labelled card, so they are distinguishable without
