@@ -6,8 +6,8 @@ import java.util.Objects;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
 import sage.Sage;
@@ -42,14 +42,15 @@ public class Main extends Application {
                 Main.class.getResource(MAIN_WINDOW_FXML_PATH),
                 "Missing FXML resource: " + MAIN_WINDOW_FXML_PATH);
         FXMLLoader fxmlLoader = new FXMLLoader(mainWindowUrl);
-        AnchorPane mainWindow = fxmlLoader.load();
+        Parent mainWindow = fxmlLoader.load();
         MainWindow controller = fxmlLoader.getController();
         controller.setSage(sage);
 
         stage.setScene(new Scene(mainWindow));
         stage.setTitle("Sage");
-        stage.setMinWidth(440.0);
-        stage.setMinHeight(520.0);
+        stage.setMinWidth(360.0);
+        stage.setMinHeight(420.0);
+        stage.setResizable(true);
         stage.show();
     }
 }
