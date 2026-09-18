@@ -1,4 +1,10 @@
+---
+title: Testing notes
+---
+
 # Testing Sage
+
+[User guide](README.md) · [Build and release guide](release.md) · [Internal assertions](assertions.md)
 
 ## Automated checks
 
@@ -41,9 +47,10 @@ Repeat these checks on each supported operating system before publishing a relea
 Automated tests exercise deletion, failed writes, and corrupt-file preservation using disposable
 fixtures. No personal files need to be deleted or permission settings changed for manual testing.
 
-## Verification record
+## Historical verification record
 
-Verified locally on 18 September 2026 using macOS Apple Silicon and Zulu Java 25.0.3:
+The following results were recorded for commit `5a79590` on 18 September 2026 using macOS Apple Silicon
+and Zulu Java 25.0.3. They describe that tested revision, not unverified later build changes:
 
 - Clean build and all **95 JUnit tests passed**.
 - Non-GUI coverage: **574/579 lines (99.1%)** and **260/266 branches (97.7%)**.
@@ -69,3 +76,9 @@ before treating GUI acceptance as finished.
 Windows, Linux, and Intel macOS were not executed locally. Their CI matrix is configured but has not
 been run as part of this local change. A configured matrix is not a substitute for successful runs
 and GUI checks on those operating systems.
+
+## Documentation release checks
+
+Follow the [website publishing checklist](release.md#publish-the-product-website). Check the deployed
+HTML, not only GitHub's Markdown preview. A screenshot is not evidence that the full manual GUI
+checklist above has passed.

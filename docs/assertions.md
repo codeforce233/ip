@@ -1,4 +1,10 @@
+---
+title: Internal assertions
+---
+
 # Internal assertions
+
+[User guide](README.md) · [Testing notes](testing.md)
 
 These checks use Java's `assert` keyword in production code. They document programmer assumptions;
 they do not replace exceptions for invalid user input, invalid indexes, capacity limits, or corrupt files.
@@ -10,6 +16,7 @@ Each assertion has a diagnostic message, and none performs a required state chan
 | `TaskList.markDone` after updating the task | The task reports the completed status. Callers next save the task and show confirmation, so a subclass that fails to honor `markAsDone` must be detected before those steps. |
 | `TaskList.markUndone` after updating the task | The task reports the incomplete status. This checks the reverse state-transition contract before the change is saved and reported to the user. |
 | `TaskCodec.serialize` before serialization | The task's type matches the fields available from its runtime class. A deadline or event token without its corresponding date fields would produce a record that cannot be loaded correctly. Notes use their own type token. This is an internal model inconsistency; malformed records read from disk still use ordinary validation. A base `Task` with the `TODO` type remains supported. |
+| `Ui.showMatchingTasks` before displaying an index | Each search result belongs to the complete list. Preserving that list's numbers allows subsequent `mark`, `unmark`, and `delete` commands to target the item the user actually saw. A result outside the list indicates an internal search/display contract violation. |
 
 Assertions are explicitly enabled for Gradle tests. To enable them while running the application,
 add `-ea` to the IDE's VM options, or launch the packaged application with `java -ea -jar build/libs/sage.jar`.
