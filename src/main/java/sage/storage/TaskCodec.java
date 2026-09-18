@@ -9,6 +9,7 @@ import sage.task.Deadline;
 import sage.task.Event;
 import sage.task.Note;
 import sage.task.Task;
+import sage.task.TaskDateTime;
 import sage.task.TaskType;
 import sage.task.Todo;
 
@@ -17,6 +18,7 @@ import sage.task.Todo;
  */
 final class TaskCodec {
     private static final String FIELD_SEPARATOR = " | ";
+    private static final String ESCAPED_RECORD_PREFIX = "V2 | ";
     private static final String FIELD_SPLIT_PATTERN = "\\s*\\|\\s*";
     private static final String DONE_FLAG = "1";
     private static final String NOT_DONE_FLAG = "0";
@@ -40,10 +42,12 @@ final class TaskCodec {
      * @throws IllegalArgumentException If required fields or the completion flag are invalid.
      */
     static Task parse(String line) {
-        // Preserve empty trailing fields so legacy records retain their original meaning.
-        // Notes use the entire remainder as text, including any literal pipe characters.
-        int splitLimit = line.stripLeading().startsWith("N") ? COMMON_FIELD_COUNT : -1;
-        String[] fields = line.split(FIELD_SPLIT_PATTERN, splitLimit);
+        String record = line.strip();
+        // Legacy notes stored their entire remainder verbatim, including backslashes and pipes.
+        int splitLimit = record.startsWith("N") ? COMMON_FIELD_COUNT : -1;
+        String[] fields = record.startsWith(ESCAPED_RECORD_PREFIX)
+                ? parseEscapedFields(record.substring(ESCAPED_RECORD_PREFIX.length()))
+                : record.split(FIELD_SPLIT_PATTERN, splitLimit);
         if (fields.length < COMMON_FIELD_COUNT) {
             throw new IllegalArgumentException("Invalid task format");
         }
@@ -55,6 +59,9 @@ final class TaskCodec {
         Task task = createTask(fields, description);
         String completionFlag = fields[STATUS_INDEX].trim();
         if (DONE_FLAG.equals(completionFlag)) {
+            if (task instanceof Note) {
+                throw new IllegalArgumentException("Notes cannot have a completion state");
+            }
             task.markAsDone();
         } else if (!NOT_DONE_FLAG.equals(completionFlag)) {
             throw new IllegalArgumentException("Invalid completion flag");
@@ -73,21 +80,39 @@ final class TaskCodec {
     private static Task createTask(String[] fields, String description) {
         switch (fields[TYPE_INDEX].trim()) {
         case "T":
+            requireFieldCount(fields, COMMON_FIELD_COUNT);
             return new Todo(description);
         case "N":
+            requireFieldCount(fields, COMMON_FIELD_COUNT);
             return new Note(description);
         case "D":
-            if (fields.length < DEADLINE_FIELD_COUNT) {
-                throw new IllegalArgumentException("Deadline missing due date");
-            }
+            requireFieldCount(fields, DEADLINE_FIELD_COUNT);
+            TaskDateTime.validate(fields[START_OR_DUE_TIME_INDEX]);
             return new Deadline(description, fields[START_OR_DUE_TIME_INDEX].trim());
         case "E":
-            if (fields.length < EVENT_FIELD_COUNT) {
-                throw new IllegalArgumentException("Event missing times");
+            requireFieldCount(fields, EVENT_FIELD_COUNT);
+            TaskDateTime.validate(fields[START_OR_DUE_TIME_INDEX]);
+            TaskDateTime.validate(fields[END_TIME_INDEX]);
+            Event event = new Event(description, fields[START_OR_DUE_TIME_INDEX].trim(), fields[END_TIME_INDEX].trim());
+            if (event.getFrom() != null && event.getTo() != null && !event.getFrom().isBefore(event.getTo())) {
+                throw new IllegalArgumentException("Event must end after its start");
             }
-            return new Event(description, fields[START_OR_DUE_TIME_INDEX].trim(), fields[END_TIME_INDEX].trim());
+            return event;
         default:
             throw new IllegalArgumentException("Unknown task type");
+        }
+    }
+
+    /**
+     * Rejects missing or surplus fields instead of silently discarding saved information.
+     *
+     * @param fields The decoded record fields.
+     * @param expectedCount The count required by the record type.
+     * @throws IllegalArgumentException If the field count does not match.
+     */
+    private static void requireFieldCount(String[] fields, int expectedCount) {
+        if (fields.length != expectedCount) {
+            throw new IllegalArgumentException("Invalid number of saved fields");
         }
     }
 
@@ -111,7 +136,86 @@ final class TaskCodec {
             fields.add(formatStoredTime(event.getFrom(), event.getFromText()));
             fields.add(formatStoredTime(event.getTo(), event.getToText()));
         }
+        boolean needsEscaping = fields.stream().anyMatch(field -> field.contains("|") || field.contains("\\")
+                || field.contains("\n") || field.contains("\r"));
+        if (needsEscaping) {
+            return ESCAPED_RECORD_PREFIX
+                    + String.join(FIELD_SEPARATOR, fields.stream().map(TaskCodec::escape).toList());
+        }
         return String.join(FIELD_SEPARATOR, fields);
+    }
+
+    /**
+     * Escapes record separators and line breaks without changing existing unversioned records.
+     *
+     * @param value The field to write.
+     * @return A single-line escaped representation.
+     */
+    private static String escape(String value) {
+        return value.replace("\\", "\\\\").replace("|", "\\|")
+                .replace("\n", "\\n").replace("\r", "\\r");
+    }
+
+    /**
+     * Splits versioned records only at unescaped pipes and decodes each field afterwards.
+     *
+     * @param record The versioned record without its prefix.
+     * @return The decoded fields.
+     * @throws IllegalArgumentException If an escape is incomplete or unknown.
+     */
+    private static String[] parseEscapedFields(String record) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder field = new StringBuilder();
+        for (int i = 0; i < record.length(); i++) {
+            char character = record.charAt(i);
+            if (character == '\\') {
+                if (i + 1 >= record.length()) {
+                    throw new IllegalArgumentException("Incomplete field escape");
+                }
+                field.append(character).append(record.charAt(++i));
+            } else if (character == '|') {
+                fields.add(unescape(field.toString().trim()));
+                field.setLength(0);
+            } else {
+                field.append(character);
+            }
+        }
+        fields.add(unescape(field.toString().trim()));
+        return fields.toArray(String[]::new);
+    }
+
+    /**
+     * Decodes the documented escapes in one versioned field.
+     *
+     * @param field The escaped field.
+     * @return The original field text.
+     * @throws IllegalArgumentException If an unknown escape is present.
+     */
+    private static String unescape(String field) {
+        StringBuilder decoded = new StringBuilder();
+        for (int i = 0; i < field.length(); i++) {
+            char character = field.charAt(i);
+            if (character != '\\') {
+                decoded.append(character);
+                continue;
+            }
+            char escaped = field.charAt(++i);
+            switch (escaped) {
+            case 'n':
+                decoded.append('\n');
+                break;
+            case 'r':
+                decoded.append('\r');
+                break;
+            case '\\':
+            case '|':
+                decoded.append(escaped);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown field escape");
+            }
+        }
+        return decoded.toString();
     }
 
     /**

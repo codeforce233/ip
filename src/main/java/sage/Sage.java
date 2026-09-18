@@ -8,6 +8,7 @@ import sage.core.Parser;
 import sage.core.TaskList;
 import sage.exception.SageException;
 import sage.storage.Storage;
+import sage.task.Task;
 import sage.ui.Ui;
 
 /**
@@ -34,6 +35,16 @@ public class Sage {
     private boolean isExit;
 
     /**
+     * Describes whether the latest graphical response reports a command or persistence failure.
+     */
+    private boolean hasError;
+
+    /**
+     * Retains any load failure so the console and GUI can explain why saved data is unavailable.
+     */
+    private final String startupMessage;
+
+    /**
      * Creates a Sage application instance backed by a data file.
      *
      * @param filePath The path where task data is stored.
@@ -41,7 +52,15 @@ public class Sage {
     public Sage(String filePath) {
         ui = new Ui();
         storage = new Storage(filePath);
-        tasks = new TaskList(storage.load());
+        List<Task> loadedTasks = new ArrayList<>();
+        String loadWarning = "";
+        try {
+            loadedTasks = storage.load();
+        } catch (SageException exception) {
+            loadWarning = exception.getMessage();
+        }
+        tasks = new TaskList(loadedTasks);
+        startupMessage = loadWarning;
         responseLines = new ArrayList<>();
         responseUi = new Ui(line -> {
             if (!Ui.LINE.equals(line)) {
@@ -56,9 +75,15 @@ public class Sage {
      */
     public void run() {
         ui.showWelcome();
+        if (!startupMessage.isEmpty()) {
+            ui.showError(startupMessage);
+        }
         boolean shouldExit = false;
         while (!shouldExit) {
             String fullCommand = ui.readCommand();
+            if (fullCommand == null) {
+                break;
+            }
             boolean isListCommand = "list".equals(fullCommand.trim());
             boolean hasCommandErrored = false;
             try {
@@ -85,9 +110,11 @@ public class Sage {
     public String getResponse(String input) {
         responseLines.clear();
         isExit = false;
+        hasError = false;
         try {
             isExit = executeCommand(input, responseUi);
         } catch (SageException e) {
+            hasError = true;
             responseUi.showError(e.getMessage());
         }
         return String.join(System.lineSeparator(), responseLines);
@@ -100,6 +127,24 @@ public class Sage {
      */
     public boolean isExit() {
         return isExit;
+    }
+
+    /**
+     * Returns whether the latest graphical command failed, independently of the response wording.
+     *
+     * @return True after an invalid command or failed save; false after a successful command.
+     */
+    public boolean hasError() {
+        return hasError;
+    }
+
+    /**
+     * Returns a startup warning for display by either interface.
+     *
+     * @return An empty string on successful startup, or a warning about unreadable saved data.
+     */
+    public String getStartupMessage() {
+        return startupMessage;
     }
 
     /**

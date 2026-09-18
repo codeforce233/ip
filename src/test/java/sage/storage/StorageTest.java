@@ -7,10 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import sage.exception.SageException;
 import sage.task.Deadline;
 import sage.task.Event;
 import sage.task.Task;
@@ -55,20 +57,22 @@ class StorageTest {
     }
 
     @Test
-    void load_withCorruptedTaskFile_returnsEmptyList() throws Exception {
+    void load_withCorruptedTaskFile_reportsErrorAndPreventsOverwrite() throws Exception {
         Path file = tempDir.resolve("broken.txt");
         Files.write(file, List.of("bad | data"));
 
         Storage storage = new Storage(file.toString());
-        assertTrue(storage.load().isEmpty());
+        assertThrows(SageException.class, storage::load);
+        assertThrows(SageException.class, () -> storage.save(List.of(new Todo("replacement"))));
+        assertEquals(List.of("bad | data"), Files.readAllLines(file));
     }
 
     @Test
-    void load_invalidRecordAfterValidRecord_discardsPartialResults() throws Exception {
+    void load_invalidRecordAfterValidRecord_rejectsEntireFile() throws Exception {
         Path file = tempDir.resolve("partially-corrupt.txt");
         Files.write(file, List.of("T | 1 | read", "E | 0 | missing times"));
 
-        assertTrue(new Storage(file.toString()).load().isEmpty());
+        assertThrows(SageException.class, () -> new Storage(file.toString()).load());
     }
 
     @Test
@@ -83,5 +87,59 @@ class StorageTest {
         assertEquals(2, loaded.size());
         assertEquals("[D][ ] submit (by: Sunday)", loaded.get(0).toString());
         assertEquals("[E][ ] meet (from: Monday to: Tuesday)", loaded.get(1).toString());
+    }
+
+    @Test
+    void load_missingFile_hasNoFilesystemSideEffects() throws Exception {
+        Path file = tempDir.resolve("new-folder/tasks.txt");
+        assertTrue(new Storage(file.toString()).load().isEmpty());
+        assertTrue(Files.notExists(file.getParent()));
+    }
+
+    @Test
+    void load_legacyDuplicates_preservesRecordsButOversizedFileIsRejected() throws Exception {
+        Path file = tempDir.resolve("invalid-list.txt");
+        Files.write(file, List.of("T | 0 | read", "T | 1 | READ"));
+        assertEquals(2, new Storage(file.toString()).load().size());
+        List<String> tooMany = IntStream.rangeClosed(0, 100)
+                .mapToObj(index -> "T | 0 | task " + index).toList();
+        Files.write(file, tooMany);
+        assertThrows(SageException.class, () -> new Storage(file.toString()).load());
+        assertEquals(tooMany, Files.readAllLines(file));
+    }
+
+    @Test
+    void save_existingDestinationDirectory_failsAndCleansTemporaryFile() throws Exception {
+        Path directory = tempDir.resolve("tasks.txt");
+        Files.createDirectory(directory);
+        Files.writeString(directory.resolve("keep.txt"), "keep");
+        Storage storage = new Storage(directory.toString());
+        assertThrows(SageException.class, () -> storage.save(List.of(new Todo("read"))));
+        assertEquals("keep", Files.readString(directory.resolve("keep.txt")));
+        try (var files = Files.list(tempDir)) {
+            assertEquals(List.of(directory), files.toList());
+        }
+    }
+
+    @Test
+    void load_invalidOrInaccessiblePath_reportsCheckedError() {
+        for (String invalid : List.of("", "\u0000", tempDir.toString())) {
+            Storage storage = new Storage(invalid);
+            assertThrows(SageException.class, storage::load);
+            assertThrows(SageException.class, () -> storage.save(List.of(new Todo("read"))));
+        }
+        assertThrows(SageException.class, new Storage(null)::load);
+    }
+
+    @Test
+    void load_afterRepair_enablesSavingAgain() throws Exception {
+        Path file = tempDir.resolve("repair.txt");
+        Files.writeString(file, "broken");
+        Storage storage = new Storage(file.toString());
+        assertThrows(SageException.class, storage::load);
+        Files.writeString(file, "T | 0 | repaired");
+        assertEquals("repaired", storage.load().get(0).getDescription());
+        storage.save(List.of(new Todo("new item")));
+        assertEquals("new item", storage.load().get(0).getDescription());
     }
 }

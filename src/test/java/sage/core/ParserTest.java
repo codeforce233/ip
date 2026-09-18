@@ -46,7 +46,7 @@ class ParserTest {
 
     @Test
     void parse_invalidDeadlineAndEventDelimiters_preservesFormatErrors() {
-        for (String input : List.of("deadline", "deadline report", "deadline report /by")) {
+        for (String input : List.of("deadline", "deadline report")) {
             SageException error = assertThrows(SageException.class, () -> Parser.parse(input));
             assertEquals("The deadline format is invalid. Try: deadline <task> /by <time>", error.getMessage());
         }
@@ -67,14 +67,17 @@ class ParserTest {
     }
 
     @Test
-    void parse_existingPrefixAndWhitespaceSyntax_preservesArguments() throws SageException {
+    void parse_exactCommandAndWhitespaceSyntax_preservesArguments() throws SageException {
         TaskList tasks = new TaskList();
         Storage storage = new Storage(tempDir.resolve("prefix.txt").toString());
         Ui ui = new Ui();
 
         Parser.parse("  todo   read book  ").execute(tasks, ui, storage);
-        Parser.parse("todowrite notes").execute(tasks, ui, storage);
-        Parser.parse("mark1").execute(tasks, ui, storage);
+        Parser.parse("todo\twrite notes").execute(tasks, ui, storage);
+        Parser.parse("mark\t1").execute(tasks, ui, storage);
+        for (String malformed : List.of("todowrite notes", "mark1", "finding book", "delete2", "eventual")) {
+            assertThrows(SageException.class, () -> Parser.parse(malformed), malformed);
+        }
 
         assertEquals("read book", tasks.get(0).getDescription());
         assertEquals("write notes", tasks.get(1).getDescription());
@@ -82,20 +85,19 @@ class ParserTest {
     }
 
     @Test
-    void parse_eventWithFreeTextOrEqualTimes_preservesAcceptedValues() throws SageException {
+    void parse_eventWithFreeTextTimes_preservesAcceptedValues() throws SageException {
         TaskList tasks = new TaskList();
         Storage storage = new Storage(tempDir.resolve("events.txt").toString());
         Ui ui = new Ui();
 
         Parser.parse("event  meeting  /from Monday /to Tuesday").execute(tasks, ui, storage);
-        Parser.parse("event reminder /from 2025-01-02 /to 2025-01-02").execute(tasks, ui, storage);
 
         Event meeting = assertInstanceOf(Event.class, tasks.get(0));
         assertEquals("meeting", meeting.getDescription());
         assertEquals("Monday", meeting.getFromText());
         assertEquals("Tuesday", meeting.getToText());
-        Event reminder = assertInstanceOf(Event.class, tasks.get(1));
-        assertEquals(reminder.getFrom(), reminder.getTo());
+        assertThrows(SageException.class,
+                () -> Parser.parse("event reminder /from 2025-01-02 /to 2025-01-02"));
     }
 
     @Test
@@ -136,6 +138,40 @@ class ParserTest {
         assertThrows(SageException.class, () -> Parser.parse("deadline finish /by "));
         assertThrows(SageException.class, () -> Parser.parse("event meeting /from 2025-01-03 /to 2025-01-02"));
         assertThrows(SageException.class, () -> Parser.parse("mark"));
+    }
+
+    @Test
+    void parse_malformedOrRepeatedFields_rejectsInput() {
+        for (String input : List.of("deadline /by Sunday", "deadline task /by", "deadline task /by Sunday /by Monday",
+                "deadline task /from Sunday /by Monday", "event /from Monday /to Tuesday",
+                "event meeting /from /to Tuesday", "event meeting /from Monday /to",
+                "event meeting /from Monday /from Tuesday /to Wednesday",
+                "event meeting /from Monday /to Tuesday /to Wednesday", "todo first\nsecond", "todo bad\u0000text")) {
+            assertThrows(SageException.class, () -> Parser.parse(input), input);
+        }
+    }
+
+    @Test
+    void parse_whitespaceAroundTimeFields_acceptsTabsAndRepeatedSpaces() throws SageException {
+        TaskList tasks = new TaskList();
+        Storage storage = new Storage(tempDir.resolve("whitespace.txt").toString());
+        Parser.parse(" deadline\t report\t /by\t 2026-09-18  ").execute(tasks, new Ui(), storage);
+        Parser.parse("event meeting  /from\tMon 2pm\t/to   4pm").execute(tasks, new Ui(), storage);
+
+        assertEquals("report", tasks.get(0).getDescription());
+        Event event = assertInstanceOf(Event.class, tasks.get(1));
+        assertEquals("Mon 2pm", event.getFromText());
+        assertEquals("4pm", event.getToText());
+    }
+
+    @Test
+    void parse_impossibleDateOrTime_rejectsWithoutNormalization() {
+        for (String time : List.of("2026-02-30", "29/2/2025", "2026-13-01", "2026-09-18 24:00",
+                "18/9/2026 2460", "2026-09-18T25:00:00", "2026-9-18", "2026.09.18")) {
+            assertThrows(SageException.class, () -> Parser.parse("deadline report /by " + time), time);
+            assertThrows(SageException.class,
+                    () -> Parser.parse("event report /from " + time + " /to Sunday"), time);
+        }
     }
 
     @Test

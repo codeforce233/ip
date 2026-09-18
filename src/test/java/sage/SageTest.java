@@ -4,6 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
@@ -92,5 +98,78 @@ class SageTest {
 
         assertTrue(response.startsWith("OOPS!!! "));
         assertFalse(sage.isExit());
+    }
+
+    @Test
+    void hasError_invalidThenValidCommand_resetsErrorState() {
+        Sage sage = new Sage(tempDir.resolve("tasks.txt").toString());
+        assertFalse(sage.hasError());
+        assertEquals("", sage.getStartupMessage());
+
+        sage.getResponse("mark 1");
+        assertTrue(sage.hasError());
+
+        sage.getResponse("list");
+        assertFalse(sage.hasError());
+    }
+
+    @Test
+    void getResponse_find_retainsTaskNumbersForSubsequentCommands() {
+        Sage sage = new Sage(tempDir.resolve("tasks.txt").toString());
+        sage.getResponse("todo Read chapter");
+        sage.getResponse("todo Write report");
+
+        assertTrue(sage.getResponse("find report").contains("2.[T][ ] Write report"));
+        assertTrue(sage.getResponse("mark 2").contains("[T][X] Write report"));
+        assertTrue(sage.getResponse("list").contains("1.[T][ ] Read chapter"));
+    }
+
+    @Test
+    void getResponse_corruptFile_preservesOriginalAndExplainsRecovery() throws Exception {
+        Path dataFile = tempDir.resolve("tasks.txt");
+        String originalData = "T|0|keep this task\nnot a valid record\n";
+        Files.writeString(dataFile, originalData);
+
+        Sage sage = new Sage(dataFile.toString());
+
+        assertFalse(sage.getStartupMessage().isBlank());
+        sage.getResponse("todo replacement");
+        assertTrue(sage.hasError());
+        assertEquals(originalData, Files.readString(dataFile));
+        assertFalse(sage.getResponse("list").contains("replacement"));
+    }
+
+    @Test
+    void getResponse_failedSave_doesNotReportSuccessOrKeepUnsavedTask() throws Exception {
+        Path dataFolder = tempDir.resolve("data");
+        Files.createDirectory(dataFolder);
+        Sage sage = new Sage(dataFolder.resolve("tasks.txt").toString());
+        Files.delete(dataFolder);
+        Files.writeString(dataFolder, "a file now occupies the data directory");
+
+        sage.getResponse("todo cannot save");
+
+        assertTrue(sage.hasError());
+        assertFalse(sage.getResponse("list").contains("cannot save"));
+        assertEquals("a file now occupies the data directory", Files.readString(dataFolder));
+    }
+
+    @Test
+    void run_endOfInput_exitsCleanlyWithoutInventingACommand() {
+        InputStream originalIn = System.in;
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        System.setIn(new ByteArrayInputStream(new byte[0]));
+        System.setOut(new PrintStream(captured, true, StandardCharsets.UTF_8));
+        try {
+            new Sage(tempDir.resolve("tasks.txt").toString()).run();
+
+            String output = captured.toString(StandardCharsets.UTF_8);
+            assertTrue(output.contains("Sage"));
+            assertFalse(output.contains("OOPS!!!"));
+        } finally {
+            System.setIn(originalIn);
+            System.setOut(originalOut);
+        }
     }
 }

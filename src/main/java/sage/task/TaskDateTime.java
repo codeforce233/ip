@@ -5,21 +5,25 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Shares the date parsing and display rules used by deadlines and events.
  */
-final class TaskDateTime {
-    private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy, h:mma");
-    private static final DateTimeFormatter DATE_ONLY_DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("MMM d yyyy");
+public final class TaskDateTime {
+    private static final DateTimeFormatter DISPLAY_FORMATTER =
+            DateTimeFormatter.ofPattern("MMM d uuuu, h:mma", Locale.ENGLISH);
+    private static final DateTimeFormatter DATE_ONLY_DISPLAY_FORMATTER =
+            DateTimeFormatter.ofPattern("MMM d uuuu", Locale.ENGLISH);
     private static final List<DateTimeFormatter> INPUT_FORMATTERS = List.of(
-            DateTimeFormatter.ofPattern("d/M/yyyy HHmm"),
-            DateTimeFormatter.ofPattern("d/M/yyyy HH:mm"),
-            DateTimeFormatter.ofPattern("d/M/yyyy"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+            strictFormatter("d/M/uuuu HHmm"),
+            strictFormatter("d/M/uuuu HH:mm"),
+            strictFormatter("d/M/uuuu"),
+            strictFormatter("uuuu-MM-dd HHmm"),
+            strictFormatter("uuuu-MM-dd HH:mm"),
+            strictFormatter("uuuu-MM-dd"),
             DateTimeFormatter.ISO_LOCAL_DATE_TIME
     );
 
@@ -32,7 +36,7 @@ final class TaskDateTime {
      * @param rawValue The date or date-time text to parse.
      * @return The parsed value, or null for blank or unsupported text.
      */
-    static LocalDateTime parse(String rawValue) {
+    public static LocalDateTime parse(String rawValue) {
         String value = rawValue == null ? "" : rawValue.trim();
         if (value.isEmpty()) {
             return null;
@@ -45,6 +49,32 @@ final class TaskDateTime {
             }
         }
         return null;
+    }
+
+    /**
+     * Checks date-like input strictly while retaining natural-language times such as Sunday.
+     *
+     * @param value The nonempty time text to validate.
+     * @throws IllegalArgumentException If a numeric date is invalid or the value is empty.
+     */
+    public static void validate(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("The time cannot be empty.");
+        }
+        if (parse(value) == null && value.strip().matches("[+-]?\\d+\\s*[/.-].*")) {
+            throw new IllegalArgumentException("That date or time is invalid. Use a real date such as "
+                    + "2026-09-18 or 18/9/2026 1430.");
+        }
+    }
+
+    /**
+     * Builds a formatter that rejects impossible dates instead of silently adjusting them.
+     *
+     * @param pattern The supported date pattern.
+     * @return The strict, language-independent formatter.
+     */
+    private static DateTimeFormatter strictFormatter(String pattern) {
+        return DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH).withResolverStyle(ResolverStyle.STRICT);
     }
 
     /**

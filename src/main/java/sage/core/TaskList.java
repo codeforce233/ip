@@ -1,16 +1,23 @@
 package sage.core;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
+import sage.task.Deadline;
+import sage.task.Event;
 import sage.task.Task;
 
 /**
  * Stores and manages the collection of tasks in memory.
  */
 public class TaskList {
-    private static final int MAX_TASKS = 100;
+    /**
+     * Maximum number of tasks and notes supported by the application.
+     */
+    public static final int MAX_TASKS = 100;
     private final List<Task> tasks;
 
     /**
@@ -34,14 +41,65 @@ public class TaskList {
      *
      * @param task The task to add.
      * @throws IllegalStateException If the task list has reached its maximum capacity.
+     * @throws IllegalArgumentException If the same task details are already present.
      */
     public void add(Task task) {
+        if (tasks.stream().anyMatch(existing -> hasSameDetails(existing, task))) {
+            throw new IllegalArgumentException("That item is already in your list. Use list to find it.");
+        }
         if (tasks.size() >= MAX_TASKS) {
             throw new IllegalStateException("You have reached the maximum number of tasks.");
         }
         tasks.add(task);
         // A successful insertion must preserve the capacity enforced above.
         assert tasks.size() <= MAX_TASKS : "Adding a task must not exceed the task-list capacity";
+    }
+
+    /**
+     * Compares task identity independently of completion state and harmless text spacing or case.
+     * Parsed date-times are compared by value so equivalent input formats remain duplicates.
+     *
+     * @param first The existing item.
+     * @param second The candidate item.
+     * @return True if both items have the same category, description, and time details.
+     */
+    private static boolean hasSameDetails(Task first, Task second) {
+        if (first.getType() != second.getType()
+                || !normalize(first.getDescription()).equals(normalize(second.getDescription()))) {
+            return false;
+        }
+        if (first instanceof Deadline firstDeadline && second instanceof Deadline secondDeadline) {
+            return normalizeTime(firstDeadline.getBy(), firstDeadline.getByText())
+                    .equals(normalizeTime(secondDeadline.getBy(), secondDeadline.getByText()));
+        }
+        if (first instanceof Event firstEvent && second instanceof Event secondEvent) {
+            return normalizeTime(firstEvent.getFrom(), firstEvent.getFromText())
+                    .equals(normalizeTime(secondEvent.getFrom(), secondEvent.getFromText()))
+                    && normalizeTime(firstEvent.getTo(), firstEvent.getToText())
+                    .equals(normalizeTime(secondEvent.getTo(), secondEvent.getToText()));
+        }
+        return true;
+    }
+
+    /**
+     * Produces stable text for comparisons without changing the user-visible description.
+     *
+     * @param value The description or natural-language time.
+     * @return Case-insensitive text with repeated whitespace collapsed.
+     */
+    private static String normalize(String value) {
+        return value.strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Normalizes a parsed time or its retained natural-language representation.
+     *
+     * @param parsedTime The parsed value, if available.
+     * @param text The retained text.
+     * @return A consistent time identity.
+     */
+    private static String normalizeTime(LocalDateTime parsedTime, String text) {
+        return parsedTime == null ? normalize(text) : parsedTime.toString();
     }
 
     /**
@@ -120,9 +178,9 @@ public class TaskList {
             return new ArrayList<>();
         }
 
-        String normalizedKeyword = keyword.trim().toLowerCase();
+        String normalizedKeyword = keyword.trim().toLowerCase(Locale.ROOT);
         return tasks.stream()
-                .filter(task -> task.getDescription().toLowerCase().contains(normalizedKeyword))
+                .filter(task -> task.getDescription().toLowerCase(Locale.ROOT).contains(normalizedKeyword))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 }

@@ -2,9 +2,11 @@ package sage.task;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -47,5 +49,29 @@ class TaskDateTimeTest {
     void toString_midnightEvent_omitsTime() {
         assertEquals("[E][ ] meet (from: Feb 14 2025 to: Feb 15 2025)",
                 new Event("meet", "2025-02-14", "2025-02-15").toString());
+    }
+
+    @Test
+    void parse_invalidDatesAndTimes_doesNotRepairOrDiscardInvalidFields() {
+        assertThrows(IllegalArgumentException.class, () -> TaskDateTime.validate(null));
+        assertThrows(IllegalArgumentException.class, () -> TaskDateTime.validate(" "));
+        for (String value : List.of("2026-02-30", "29/2/2025", "2026-04-31", "2026-09-18 24:00",
+                "2026-09-18 25:00", "18/9/2026 2460", "2026-09-18T24:00:00")) {
+            assertNull(TaskDateTime.parse(value), value);
+            assertThrows(IllegalArgumentException.class, () -> TaskDateTime.validate(value), value);
+        }
+        assertEquals(LocalDateTime.of(2024, 2, 29, 0, 0), TaskDateTime.parse("29/2/2024"));
+        assertEquals(LocalDateTime.of(2026, 9, 18, 14, 30, 45), TaskDateTime.parse("2026-09-18T14:30:45"));
+    }
+
+    @Test
+    void format_nonEnglishSystemLocale_keepsEnglishDates() {
+        Locale original = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.CHINESE);
+            assertEquals("[D][ ] read (by: Sep 18 2026)", new Deadline("read", "2026-09-18").toString());
+        } finally {
+            Locale.setDefault(original);
+        }
     }
 }

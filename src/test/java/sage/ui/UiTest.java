@@ -1,6 +1,7 @@
 package sage.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -22,6 +23,7 @@ class UiTest {
         try {
             Ui ui = new Ui();
             assertEquals("todo read book", ui.readCommand());
+            assertNull(ui.readCommand());
         } finally {
             System.setIn(originalIn);
         }
@@ -39,7 +41,7 @@ class UiTest {
         assertTrue(listOutput.contains("Here are the tasks in your list:"));
         assertTrue(listOutput.contains("watch lecture"));
 
-        String matchedOutput = captureOutput(() -> ui.showMatchingTasks(List.of(task)));
+        String matchedOutput = captureOutput(() -> ui.showMatchingTasks(List.of(task), List.of(task)));
         assertTrue(matchedOutput.contains("Here are the matching tasks in your list:"));
         assertTrue(matchedOutput.contains("watch lecture"));
 

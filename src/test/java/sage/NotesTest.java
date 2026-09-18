@@ -28,7 +28,7 @@ class NotesTest {
                 "1.[T][ ] buy tickets", "2.[N] Waist: 32 inches", "3.[N] Movie: Spirited Away"),
                 reloaded.getResponse("list"));
         assertEquals(String.join(System.lineSeparator(), "Here are the matching tasks in your list:",
-                "1.[N] Waist: 32 inches"), reloaded.getResponse("find WAIST"));
+                "2.[N] Waist: 32 inches"), reloaded.getResponse("find WAIST"));
         assertEquals(String.join(System.lineSeparator(), "Noted. I've removed this note:",
                 "  [N] Waist: 32 inches"), reloaded.getResponse("delete 2"));
 
@@ -71,5 +71,16 @@ class NotesTest {
         sage.getResponse("mark 2");
         assertEquals(String.join(System.lineSeparator(), "Here are the tasks in your list:",
                 "1.[N] Waist: 32 inches", "2.[T][X] buy jeans"), new Sage(file.toString()).getResponse("list"));
+    }
+
+    @Test
+    void note_duplicateText_returnsErrorWithoutAddingOrLosingData() {
+        Path file = tempDir.resolve("duplicates.txt");
+        Sage sage = new Sage(file.toString());
+        sage.getResponse("note Waist: 32 inches");
+        sage.getResponse("note waist:   32 INCHES");
+        assertTrue(sage.hasError());
+        assertEquals(String.join(System.lineSeparator(), "Here are the tasks in your list:",
+                "1.[N] Waist: 32 inches"), new Sage(file.toString()).getResponse("list"));
     }
 }

@@ -1,11 +1,15 @@
 package sage.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -22,7 +26,7 @@ class CommandTest {
     Path tempDir;
 
     @Test
-    void addCommand_executesAndSavesTask() {
+    void addCommand_executesAndSavesTask() throws SageException {
         TaskList tasks = new TaskList();
         Storage storage = new Storage(tempDir.resolve("tasks.txt").toString());
         Ui ui = new Ui();
@@ -83,7 +87,7 @@ class CommandTest {
     }
 
     @Test
-    void listAndExitCommandsDisplayExpectedOutput() {
+    void listAndExitCommandsDisplayExpectedOutput() throws SageException {
         TaskList tasks = new TaskList();
         Storage storage = new Storage(tempDir.resolve("tasks.txt").toString());
         Ui ui = new Ui();
@@ -98,7 +102,7 @@ class CommandTest {
     }
 
     @Test
-    void findCommand_filtersTasksCaseInsensitive() {
+    void findCommand_filtersTasksCaseInsensitive() throws SageException {
         TaskList tasks = new TaskList();
         Storage storage = new Storage(tempDir.resolve("tasks.txt").toString());
         Ui ui = new Ui();
@@ -114,7 +118,52 @@ class CommandTest {
         assertTrue(output.contains("write report") == false);
     }
 
-    private String captureOutput(Runnable action) {
+    @Test
+    void commands_failedSave_rollsBackAddDeleteAndCompletion() throws Exception {
+        Path blocker = tempDir.resolve("blocked");
+        Files.writeString(blocker, "Keep this file");
+        Storage storage = new Storage(blocker.resolve("tasks.txt").toString());
+        TaskList tasks = new TaskList();
+        Todo first = new Todo("first");
+        Todo second = new Todo("second");
+        tasks.add(first);
+        tasks.add(second);
+        List<String> output = new ArrayList<>();
+        Ui ui = new Ui(output::add);
+
+        assertThrows(SageException.class, () -> new AddCommand(new Todo("third")).execute(tasks, ui, storage));
+        assertEquals(List.of(first, second), tasks.getTasks());
+        assertThrows(SageException.class, () -> new DeleteCommand(1).execute(tasks, ui, storage));
+        assertEquals(List.of(first, second), tasks.getTasks());
+        assertThrows(SageException.class, () -> new MarkCommand(1).execute(tasks, ui, storage));
+        assertEquals(" ", first.getStatusIcon());
+        assertThrows(SageException.class, () -> new UnmarkCommand(1).execute(tasks, ui, storage));
+        assertEquals(" ", first.getStatusIcon());
+        first.markAsDone();
+        assertThrows(SageException.class, () -> new UnmarkCommand(1).execute(tasks, ui, storage));
+        assertEquals("X", first.getStatusIcon());
+        assertThrows(SageException.class, () -> new MarkCommand(1).execute(tasks, ui, storage));
+        assertEquals("X", first.getStatusIcon());
+        assertTrue(output.isEmpty());
+        assertEquals("Keep this file", Files.readString(blocker));
+    }
+
+    @Test
+    void commands_invalidIndexes_returnErrorsWithoutMutatingTasks() {
+        TaskList tasks = new TaskList();
+        tasks.add(new Todo("read"));
+        Storage storage = new Storage(tempDir.resolve("indexes.txt").toString());
+        Ui ui = new Ui(line -> { });
+        for (int index : List.of(Integer.MIN_VALUE, -1, 0, 2, Integer.MAX_VALUE)) {
+            assertThrows(SageException.class, () -> new MarkCommand(index).execute(tasks, ui, storage));
+            assertThrows(SageException.class, () -> new UnmarkCommand(index).execute(tasks, ui, storage));
+            assertThrows(SageException.class, () -> new DeleteCommand(index).execute(tasks, ui, storage));
+        }
+        assertEquals(1, tasks.size());
+        assertEquals(" ", tasks.get(0).getStatusIcon());
+    }
+
+    private String captureOutput(ThrowingRunnable action) throws SageException {
         PrintStream originalOut = System.out;
         ByteArrayOutputStream captured = new ByteArrayOutputStream();
         System.setOut(new PrintStream(captured));
@@ -124,5 +173,10 @@ class CommandTest {
         } finally {
             System.setOut(originalOut);
         }
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws SageException;
     }
 }

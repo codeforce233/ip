@@ -27,7 +27,7 @@ public class DeleteCommand extends Command {
      * @param tasks the task list to modify.
      * @param ui the user interface used to display output.
      * @param storage the storage system used to persist the change.
-     * @throws SageException if the task number is invalid.
+     * @throws SageException If the task number is invalid or the save fails.
      */
     @Override
     public void execute(TaskList tasks, Ui ui, Storage storage) throws SageException {
@@ -35,7 +35,12 @@ public class DeleteCommand extends Command {
             throw new SageException("The task number is invalid. Use a number from the current list.");
         }
         Task removed = tasks.delete(index - 1);
-        storage.save(tasks.getTasks());
+        try {
+            storage.save(tasks.getTasks());
+        } catch (SageException exception) {
+            tasks.getTasks().add(index - 1, removed);
+            throw exception;
+        }
         ui.showRemovedTask(removed, tasks.size());
     }
 }

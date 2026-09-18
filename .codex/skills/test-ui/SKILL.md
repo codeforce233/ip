@@ -31,7 +31,7 @@ The file `test/ui-test-plan.md` contains a JSON block defining the app command a
 
 ```json
 {
-  "app_command": "cd /path/to/repo && javac src/main/java/*.java && printf '%s' '...input...' | java -cp src/main/java Sage",
+  "app_command": ["java", "-ea", "-Dfile.encoding=UTF-8", "-cp", "{classes}", "sage.Sage"],
   "cases": [
     {
       "id": "todo-list",
@@ -44,3 +44,11 @@ The file `test/ui-test-plan.md` contains a JSON block defining the app command a
 ```
 
 The JSON is the source of truth for test execution; the surrounding markdown is for human-readable documentation.
+
+The runner requires Java 25, compiles the non-GUI application once, and starts each case in a separate temporary
+directory. `{classes}` is replaced with the compiled class directory. Commands are argument arrays, never shell
+scripts. A nonzero exit code or timeout also fails the case even when stdout matches. Line endings are normalized
+to LF by text-mode capture so the same plan runs on Windows, macOS, and Linux.
+
+Use `--jar build/libs/sage.jar` to run the same cases against a packaged JAR without compiling sources. This runs
+the CLI entry point inside the JAR; it does not replace manual GUI testing.

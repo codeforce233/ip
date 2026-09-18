@@ -4,7 +4,14 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
 
 ```json
 {
-  "app_command": "cd /Users/bytedance/IdeaProjects/ip && rm -rf _temp/ui-test-classes _temp/ui-test-work && mkdir -p _temp/ui-test-classes _temp/ui-test-work && find src/main/java -name '*.java' ! -path '*/sage/gui/*' ! -name 'Launcher.java' -print | sort | xargs javac -d _temp/ui-test-classes && cd _temp/ui-test-work && java -cp /Users/bytedance/IdeaProjects/ip/_temp/ui-test-classes sage.Sage",
+  "app_command": [
+    "java",
+    "-ea",
+    "-Dfile.encoding=UTF-8",
+    "-cp",
+    "{classes}",
+    "sage.Sage"
+  ],
   "cases": [
     {
       "id": "todo-list-and-exit",
@@ -71,6 +78,36 @@ This file stores the planned command-driven UI tests for the chatbot CLI. The JS
       "aim": "Verify saved notes can be listed, searched, and deleted, while empty notes and marking are rejected.",
       "input": "note Waist: 32 inches\nnote Movie: Spirited Away | 千と千尋\nlist\nfind WAIST\nmark 1\ndelete 1\nlist\nnote\nbye\n",
       "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've saved this note:\n  [N] Waist: 32 inches\n____________________________________________________________\n____________________________________________________________\nGot it. I've saved this note:\n  [N] Movie: Spirited Away | 千と千尋\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[N] Waist: 32 inches\n2.[N] Movie: Spirited Away | 千と千尋\n____________________________________________________________\n____________________________________________________________\nHere are the matching tasks in your list:\n1.[N] Waist: 32 inches\n____________________________________________________________\n____________________________________________________________\n____________________________________________________________\nOOPS!!! Notes cannot be marked or unmarked. Use delete to remove a note.\n____________________________________________________________\n____________________________________________________________\nNoted. I've removed this note:\n  [N] Waist: 32 inches\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[N] Movie: Spirited Away | 千と千尋\n____________________________________________________________\n____________________________________________________________\nOOPS!!! The text of a note cannot be empty. Try: note <text>\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "whitespace-and-exact-command-names",
+      "aim": "Accept extra command spacing, but reject command-name prefixes without mutating the list.",
+      "input": "  todo\tread book  \ntodolist\nlist\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] read book\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nOOPS!!! I'm sorry, but I don't know what that means. Try a valid command like todo, deadline, event, note, list, find, mark, unmark, delete, or bye.\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[T][ ] read book\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "invalid-date-and-event-range",
+      "aim": "Reject impossible numeric dates, repeated time fields, and zero-length events.",
+      "input": "deadline trip /by 2026-02-30\ndeadline trip /by Sunday /by Monday\nevent meeting /from 2026-10-01 14:00 /to 2026-10-01 14:00\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nOOPS!!! That date or time is invalid. Use a real date such as 2026-09-18 or 18/9/2026 1430.\n____________________________________________________________\n____________________________________________________________\nOOPS!!! Each time parameter must appear exactly once. The deadline format is invalid. Try: deadline <task> /by <time>\n____________________________________________________________\n____________________________________________________________\nOOPS!!! The event end time must be after the start time.\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "duplicate-completed-task",
+      "aim": "Reject duplicate task details regardless of case, repeated description spaces, or completion state.",
+      "input": "todo Read book\nmark 1\ntodo read  BOOK\nlist\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] Read book\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nNice! I've marked this task as done:\n  [T][X] Read book\n____________________________________________________________\n____________________________________________________________\nOOPS!!! That item is already in your list. Use list to find it.\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[T][X] Read book\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
+    },
+    {
+      "id": "end-of-input",
+      "aim": "Exit cleanly when console input ends without an explicit bye command.",
+      "input": "",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n"
+    },
+    {
+      "id": "search-keeps-task-numbers",
+      "aim": "Keep original task numbers in search results so mark targets the intended task.",
+      "input": "todo Read chapter\ntodo Write report\nfind report\nmark 2\nlist\nbye\n",
+      "expected": "____________________________________________________________\n  ____                       \n / ___|  __ _  __ _  ___     \n \\___ \\ / _` |/ _` |/ _ \\    \n  ___) | (_| | (_| |  __/    \n |____/ \\__,_|\\__, |\\___|    \n              |___/          \n\nHello! I'm Sage.\nWhat can I do for you?\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] Read chapter\nNow you have 1 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nGot it. I've added this task:\n  [T][ ] Write report\nNow you have 2 tasks in the list.\n____________________________________________________________\n____________________________________________________________\nHere are the matching tasks in your list:\n2.[T][ ] Write report\n____________________________________________________________\n____________________________________________________________\n____________________________________________________________\nNice! I've marked this task as done:\n  [T][X] Write report\n____________________________________________________________\n____________________________________________________________\nHere are the tasks in your list:\n1.[T][ ] Read chapter\n2.[T][X] Write report\n____________________________________________________________\n____________________________________________________________\nBye. Hope to see you again soon!\n____________________________________________________________\n"
     }
   ]
 }

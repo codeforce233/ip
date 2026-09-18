@@ -1,5 +1,8 @@
 package sage.core;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import sage.command.AddCommand;
 import sage.command.Command;
 import sage.command.DeleteCommand;
@@ -12,15 +15,14 @@ import sage.exception.SageException;
 import sage.task.Deadline;
 import sage.task.Event;
 import sage.task.Note;
+import sage.task.TaskDateTime;
 import sage.task.Todo;
 
 /**
  * Converts raw user input into concrete command objects.
  */
 public class Parser {
-    private static final String BY_DELIMITER = " /by ";
-    private static final String FROM_DELIMITER = " /from ";
-    private static final String TO_DELIMITER = " /to ";
+    private static final Pattern FIELD_DELIMITER = Pattern.compile("(?<!\\S)/(by|from|to)(?=\\s|$)");
     private static final String UNKNOWN_COMMAND_MESSAGE = "I'm sorry, but I don't know what that means. "
             + "Try a valid command like todo, deadline, event, note, list, find, mark, unmark, delete, or bye.";
 
@@ -42,52 +44,52 @@ public class Parser {
             throw new SageException(UNKNOWN_COMMAND_MESSAGE);
         }
 
-        String trimmedCommand = fullCommand.trim();
-
-        if ("bye".equals(trimmedCommand)) {
+        if (fullCommand.indexOf('\n') >= 0 || fullCommand.indexOf('\r') >= 0
+                || fullCommand.chars().anyMatch(character -> Character.isISOControl(character) && character != '\t')) {
+            throw new SageException("Please enter one command on a single line, without control characters.");
+        }
+        String[] parts = fullCommand.strip().split("\\s+", 2);
+        String commandWord = parts[0];
+        String arguments = parts.length == 2 ? parts[1].strip() : "";
+        switch (commandWord) {
+        case "bye":
+            requireNoArguments(arguments, commandWord);
             return new ExitCommand();
-        }
-        if ("list".equals(trimmedCommand)) {
+        case "list":
+            requireNoArguments(arguments, commandWord);
             return new ListCommand();
+        case "note":
+            return parseNote(arguments);
+        case "find":
+            return parseFind(arguments);
+        case "todo":
+            return parseTodo(arguments);
+        case "deadline":
+            return parseDeadline(arguments);
+        case "event":
+            return parseEvent(arguments);
+        case "mark":
+            return new MarkCommand(parseTaskNumber(arguments, commandWord));
+        case "unmark":
+            return new UnmarkCommand(parseTaskNumber(arguments, commandWord));
+        case "delete":
+            return new DeleteCommand(parseTaskNumber(arguments, commandWord));
+        default:
+            throw new SageException(UNKNOWN_COMMAND_MESSAGE);
         }
-        if ("note".equals(trimmedCommand) || trimmedCommand.startsWith("note ")
-                || trimmedCommand.startsWith("note\t")) {
-            return parseNote(getArguments(trimmedCommand, "note"));
-        }
-        if (trimmedCommand.startsWith("find")) {
-            return parseFind(getArguments(trimmedCommand, "find"));
-        }
-        if (trimmedCommand.startsWith("todo")) {
-            return parseTodo(getArguments(trimmedCommand, "todo"));
-        }
-        if (trimmedCommand.startsWith("deadline")) {
-            return parseDeadline(getArguments(trimmedCommand, "deadline"));
-        }
-        if (trimmedCommand.startsWith("event")) {
-            return parseEvent(getArguments(trimmedCommand, "event"));
-        }
-        if (trimmedCommand.startsWith("mark")) {
-            return new MarkCommand(parseTaskNumber(trimmedCommand, "mark"));
-        }
-        if (trimmedCommand.startsWith("unmark")) {
-            return new UnmarkCommand(parseTaskNumber(trimmedCommand, "unmark"));
-        }
-        if (trimmedCommand.startsWith("delete")) {
-            return new DeleteCommand(parseTaskNumber(trimmedCommand, "delete"));
-        }
-
-        throw new SageException(UNKNOWN_COMMAND_MESSAGE);
     }
 
     /**
-     * Extracts arguments after an already matched command prefix.
+     * Rejects extra parameters for commands that take no arguments.
      *
-     * @param input The trimmed command text.
-     * @param commandWord The command prefix already recognized by the dispatcher.
-     * @return The trimmed arguments, possibly empty.
+     * @param arguments The text after the command name.
+     * @param commandWord The command being validated.
+     * @throws SageException If extra text follows the command.
      */
-    private static String getArguments(String input, String commandWord) {
-        return input.substring(commandWord.length()).trim();
+    private static void requireNoArguments(String arguments, String commandWord) throws SageException {
+        if (!arguments.isEmpty()) {
+            throw new SageException("The " + commandWord + " command takes no extra arguments. Try: " + commandWord);
+        }
     }
 
     /**
@@ -119,18 +121,15 @@ public class Parser {
     }
 
     /**
-     * Creates a note after validating its single-line text.
+     * Creates a note after validating its nonempty text.
      *
      * @param text The information to remember.
      * @return The command that adds the note.
-     * @throws SageException If the note is empty or spans multiple lines.
+     * @throws SageException If the note is empty.
      */
     private static Command parseNote(String text) throws SageException {
         if (text.isBlank()) {
             throw new SageException("The text of a note cannot be empty. Try: note <text>");
-        }
-        if (text.contains("\n") || text.contains("\r")) {
-            throw new SageException("Please enter the note on a single line.");
         }
         return new AddCommand(new Note(text));
     }
@@ -143,19 +142,18 @@ public class Parser {
      * @throws SageException If a required deadline field is missing.
      */
     private static Command parseDeadline(String details) throws SageException {
-        int byIndex = details.indexOf(BY_DELIMITER);
-        if (byIndex < 0) {
-            throw new SageException("The deadline format is invalid. Try: deadline <task> /by <time>");
-        }
-        String description = details.substring(0, byIndex).trim();
+        String[] fields = parseFields(details, new String[]{"by"},
+                "The deadline format is invalid. Try: deadline <task> /by <time>");
+        String description = fields[0];
         if (description.isEmpty()) {
             throw new SageException("The description of a deadline cannot be empty. "
                     + "Try: deadline <task> /by <time>");
         }
-        String deadlineTime = details.substring(byIndex + BY_DELIMITER.length()).trim();
+        String deadlineTime = fields[1];
         if (deadlineTime.isEmpty()) {
             throw new SageException("The deadline time cannot be empty. Try: deadline <task> /by <time>");
         }
+        validateTime(deadlineTime);
         return new AddCommand(new Deadline(description, deadlineTime));
     }
 
@@ -164,43 +162,82 @@ public class Parser {
      *
      * @param details The arguments following the event command.
      * @return The command that adds the event.
-     * @throws SageException If a required field is missing or the end precedes the start.
+     * @throws SageException If a field is missing or invalid, or the end is not after the start.
      */
     private static Command parseEvent(String details) throws SageException {
-        int fromIndex = details.indexOf(FROM_DELIMITER);
-        int toIndex = details.indexOf(TO_DELIMITER);
-        if (fromIndex < 0 || toIndex < 0 || toIndex <= fromIndex) {
-            throw new SageException("The event format is invalid. "
-                    + "Try: event <task> /from <start> /to <end>");
-        }
-        String description = details.substring(0, fromIndex).trim();
+        String[] fields = parseFields(details, new String[]{"from", "to"},
+                "The event format is invalid. Try: event <task> /from <start> /to <end>");
+        String description = fields[0];
         if (description.isEmpty()) {
             throw new SageException("The description of an event cannot be empty. "
                     + "Try: event <task> /from <start> /to <end>");
         }
-        String startTime = details.substring(fromIndex + FROM_DELIMITER.length(), toIndex).trim();
-        String endTime = details.substring(toIndex + TO_DELIMITER.length()).trim();
+        String startTime = fields[1];
+        String endTime = fields[2];
         if (startTime.isEmpty() || endTime.isEmpty()) {
             throw new SageException("The event timings cannot be empty. "
                     + "Try: event <task> /from <start> /to <end>");
         }
+        validateTime(startTime);
+        validateTime(endTime);
         Event event = new Event(description, startTime, endTime);
-        if (event.getFrom() != null && event.getTo() != null && event.getFrom().isAfter(event.getTo())) {
+        if (event.getFrom() != null && event.getTo() != null && !event.getFrom().isBefore(event.getTo())) {
             throw new SageException("The event end time must be after the start time.");
         }
         return new AddCommand(event);
     }
 
     /**
+     * Extracts exactly the expected delimiters in order, allowing spaces or tabs around them.
+     *
+     * @param details The raw command arguments.
+     * @param expectedNames The delimiter names in their required order.
+     * @param formatMessage The actionable error for malformed fields.
+     * @return The description followed by each field value.
+     * @throws SageException If delimiters are missing, repeated, unexpected, or out of order.
+     */
+    private static String[] parseFields(String details, String[] expectedNames, String formatMessage)
+            throws SageException {
+        Matcher matcher = FIELD_DELIMITER.matcher(details);
+        String[] fields = new String[expectedNames.length + 1];
+        int previousEnd = 0;
+        for (int i = 0; i < expectedNames.length; i++) {
+            if (!matcher.find() || !expectedNames[i].equals(matcher.group(1))) {
+                throw new SageException(formatMessage);
+            }
+            fields[i] = details.substring(previousEnd, matcher.start()).strip();
+            previousEnd = matcher.end();
+        }
+        if (matcher.find()) {
+            throw new SageException("Each time parameter must appear exactly once. " + formatMessage);
+        }
+        fields[expectedNames.length] = details.substring(previousEnd).strip();
+        return fields;
+    }
+
+    /**
+     * Converts invalid numeric dates into an actionable command error.
+     *
+     * @param value The time text entered by the user.
+     * @throws SageException If the date-like value is not valid.
+     */
+    private static void validateTime(String value) throws SageException {
+        try {
+            TaskDateTime.validate(value);
+        } catch (IllegalArgumentException exception) {
+            throw new SageException(exception.getMessage());
+        }
+    }
+
+    /**
      * Extracts the required task number for mark, unmark, and delete commands.
      *
-     * @param input The trimmed command text.
-     * @param commandWord The matched command prefix.
+     * @param indexText The trimmed arguments.
+     * @param commandWord The matched command name.
      * @return The one-based task number, with range validation left to execution.
      * @throws SageException If the task number is missing or is not an integer.
      */
-    private static int parseTaskNumber(String input, String commandWord) throws SageException {
-        String indexText = getArguments(input, commandWord);
+    private static int parseTaskNumber(String indexText, String commandWord) throws SageException {
         if (indexText.isEmpty()) {
             throw new SageException("The task number is missing. Try: " + commandWord + " <task number>");
         }

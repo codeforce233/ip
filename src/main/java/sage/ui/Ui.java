@@ -18,6 +18,11 @@ public class Ui {
     public static final String LINE = "____________________________________________________________";
 
     /**
+     * Greets users consistently in the console and graphical interfaces.
+     */
+    public static final String WELCOME_MESSAGE = "Hello! I'm Sage.\nWhat can I do for you?";
+
+    /**
      * Reads console commands, or is null when this interface is configured for output only.
      */
     private final Scanner scanner;
@@ -49,14 +54,14 @@ public class Ui {
     /**
      * Reads the next command entered by the user.
      *
-     * @return The next line from standard input.
+     * @return The next line from standard input, or null when input has ended.
      * @throws IllegalStateException If this interface was created for output only.
      */
     public String readCommand() {
         if (scanner == null) {
             throw new IllegalStateException("This user interface does not accept command input.");
         }
-        return scanner.nextLine();
+        return scanner.hasNextLine() ? scanner.nextLine() : null;
     }
 
     /**
@@ -71,8 +76,7 @@ public class Ui {
                 + "              |___/          \n";
         output.accept(LINE);
         output.accept(banner);
-        output.accept("Hello! I'm Sage.");
-        output.accept("What can I do for you?");
+        WELCOME_MESSAGE.lines().forEach(output);
         output.accept(LINE);
     }
 
@@ -107,8 +111,9 @@ public class Ui {
      * Shows tasks matching a search, or a message when no tasks match.
      *
      * @param tasks The matching tasks to display.
+     * @param allTasks The full list whose task numbers must be retained in search results.
      */
-    public void showMatchingTasks(List<Task> tasks) {
+    public void showMatchingTasks(List<Task> tasks, List<Task> allTasks) {
         if (tasks.isEmpty()) {
             output.accept("There are no matching tasks in your list.");
             output.accept(LINE);
@@ -116,8 +121,11 @@ public class Ui {
         }
 
         output.accept("Here are the matching tasks in your list:");
-        for (int i = 0; i < tasks.size(); i++) {
-            output.accept((i + 1) + "." + tasks.get(i));
+        for (Task task : tasks) {
+            int taskIndex = allTasks.indexOf(task);
+            // Search results must refer to entries in the same list used by mutation commands.
+            assert taskIndex >= 0 : "A matching task must belong to the complete task list";
+            output.accept((taskIndex + 1) + "." + task);
         }
         output.accept(LINE);
     }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import sage.task.Deadline;
 import sage.task.Event;
+import sage.task.Note;
 import sage.task.Task;
 import sage.task.TaskType;
 import sage.task.Todo;
@@ -54,11 +55,38 @@ class TaskCodecTest {
     }
 
     @Test
-    void parse_emptyTrailingTimeFields_preservesLegacyRecords() {
-        Deadline deadline = assertInstanceOf(Deadline.class, TaskCodec.parse("D | 0 | submit | "));
-        Event event = assertInstanceOf(Event.class, TaskCodec.parse("E | 0 | meet | | "));
-        assertEquals("", deadline.getByText());
-        assertEquals("", event.getFromText());
-        assertEquals("", event.getToText());
+    void parse_emptyTimeFieldsOrImpossibleDates_rejectsCorruptRecords() {
+        for (String record : List.of("D | 0 | submit | ", "E | 0 | meet | | ", "D | 0 | submit | 2026-02-30",
+                "E | 0 | meet | 2026-09-18 | 2026-09-18", "E | 0 | meet | 2026-09-19 | 2026-09-18",
+                "N | 1 | impossible status", "T | 0 | task | extra", "D | 0 | task | Sunday | extra")) {
+            assertThrows(IllegalArgumentException.class, () -> TaskCodec.parse(record), record);
+        }
+    }
+
+    @Test
+    void serialize_specialCharacters_roundTripsEveryTaskType() {
+        String description = "电影 | C:\\notes\\new\nline\rreturn";
+        for (Task task : List.of(new Todo(description), new Note(description),
+                new Deadline(description, "Sunday | afternoon\\later"),
+                new Event(description, "Monday | afternoon", "Tuesday\\later"))) {
+            String serialized = TaskCodec.serialize(task);
+            Task parsed = TaskCodec.parse(serialized);
+            assertEquals(task.toString(), parsed.toString());
+            assertEquals(description, parsed.getDescription());
+        }
+    }
+
+    @Test
+    void parse_legacyPathsAndNotePipes_preservesLiteralEscapes() {
+        assertEquals("C:\\notes\\new", TaskCodec.parse("T | 0 | C:\\notes\\new").getDescription());
+        assertEquals("Movie | path C:\\notes\\new",
+                TaskCodec.parse("N | 0 | Movie | path C:\\notes\\new").getDescription());
+    }
+
+    @Test
+    void parse_malformedEscapes_rejectsRecords() {
+        for (String record : List.of("V2 | T | 0 | bad\\", "V2 | T | 0 | bad\\q")) {
+            assertThrows(IllegalArgumentException.class, () -> TaskCodec.parse(record));
+        }
     }
 }

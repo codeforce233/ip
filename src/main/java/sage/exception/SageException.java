@@ -12,4 +12,14 @@ public class SageException extends Exception {
     public SageException(String message) {
         super(message);
     }
+
+    /**
+     * Retains the underlying failure while presenting an actionable message to the user.
+     *
+     * @param message The user-facing explanation.
+     * @param cause The underlying input or file-system failure.
+     */
+    public SageException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
