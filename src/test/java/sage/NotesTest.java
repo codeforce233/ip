@@ -19,23 +19,23 @@ class NotesTest {
         Path file = tempDir.resolve("notes.txt");
         Sage sage = new Sage(file.toString());
         sage.getResponse("todo buy tickets");
-        assertEquals("Got it. I've saved this note:" + System.lineSeparator() + "  [N] Waist: 32 inches",
+        assertEquals("Saved for later:" + System.lineSeparator() + "  [N] Waist: 32 inches",
                 sage.getResponse("note Waist: 32 inches"));
         sage.getResponse("note Movie: Spirited Away");
 
         Sage reloaded = new Sage(file.toString());
-        assertEquals(String.join(System.lineSeparator(), "Here are the tasks in your list:",
-                "1.[T][ ] buy tickets", "2.[N] Waist: 32 inches", "3.[N] Movie: Spirited Away"),
+        assertEquals(String.join(System.lineSeparator(), "Here's your list:",
+                "1. [T][ ] buy tickets", "2. [N] Waist: 32 inches", "3. [N] Movie: Spirited Away"),
                 reloaded.getResponse("list"));
-        assertEquals(String.join(System.lineSeparator(), "Here are the matching tasks in your list:",
-                "2.[N] Waist: 32 inches"), reloaded.getResponse("find WAIST"));
-        assertEquals(String.join(System.lineSeparator(), "Noted. I've removed this note:",
+        assertEquals(String.join(System.lineSeparator(), "Here's what I found:",
+                "2. [N] Waist: 32 inches"), reloaded.getResponse("find WAIST"));
+        assertEquals(String.join(System.lineSeparator(), "Note cleared:",
                 "  [N] Waist: 32 inches"), reloaded.getResponse("delete 2"));
 
         String finalList = new Sage(file.toString()).getResponse("list");
         assertFalse(finalList.contains("Waist"));
-        assertTrue(finalList.contains("1.[T][ ] buy tickets"));
-        assertTrue(finalList.contains("2.[N] Movie: Spirited Away"));
+        assertTrue(finalList.contains("1. [T][ ] buy tickets"));
+        assertTrue(finalList.contains("2. [N] Movie: Spirited Away"));
     }
 
     @Test
@@ -45,7 +45,7 @@ class NotesTest {
         String text = "电影: 千と千尋 | waist: 32 | /by Sunday | path: C:\\notes";
         sage.getResponse("note " + text);
 
-        assertEquals(String.join(System.lineSeparator(), "Here are the tasks in your list:", "1.[N] " + text),
+        assertEquals(String.join(System.lineSeparator(), "Here's your list:", "1. [N] " + text),
                 new Sage(file.toString()).getResponse("list"));
     }
 
@@ -53,9 +53,9 @@ class NotesTest {
     void note_invalidInput_doesNotCreateEntries() {
         Sage sage = new Sage(tempDir.resolve("invalid.txt").toString());
         for (String input : List.of("note", "note   ", "note \t", "notebook", "note first\nsecond")) {
-            assertTrue(sage.getResponse(input).startsWith("OOPS!!! "), input);
+            assertTrue(sage.getResponse(input).startsWith("Let's try that again. "), input);
         }
-        assertEquals("Here are the tasks in your list:", sage.getResponse("list"));
+        assertEquals("A clear page. Add a task with todo <task> or a note with note <text>.", sage.getResponse("list"));
     }
 
     @Test
@@ -65,12 +65,12 @@ class NotesTest {
         sage.getResponse("note Waist: 32 inches");
         sage.getResponse("todo buy jeans");
         for (String input : List.of("mark 1", "unmark 1")) {
-            assertEquals("OOPS!!! Notes cannot be marked or unmarked. Use delete to remove a note.",
+            assertEquals("Let's try that again. Notes cannot be marked or unmarked. Use delete to remove a note.",
                     sage.getResponse(input));
         }
         sage.getResponse("mark 2");
-        assertEquals(String.join(System.lineSeparator(), "Here are the tasks in your list:",
-                "1.[N] Waist: 32 inches", "2.[T][X] buy jeans"), new Sage(file.toString()).getResponse("list"));
+        assertEquals(String.join(System.lineSeparator(), "Here's your list:",
+                "1. [N] Waist: 32 inches", "2. [T][X] buy jeans"), new Sage(file.toString()).getResponse("list"));
     }
 
     @Test
@@ -80,7 +80,7 @@ class NotesTest {
         sage.getResponse("note Waist: 32 inches");
         sage.getResponse("note waist:   32 INCHES");
         assertTrue(sage.hasError());
-        assertEquals(String.join(System.lineSeparator(), "Here are the tasks in your list:",
-                "1.[N] Waist: 32 inches"), new Sage(file.toString()).getResponse("list"));
+        assertEquals(String.join(System.lineSeparator(), "Here's your list:",
+                "1. [N] Waist: 32 inches"), new Sage(file.toString()).getResponse("list"));
     }
 }

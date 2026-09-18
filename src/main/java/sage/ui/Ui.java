@@ -20,7 +20,8 @@ public class Ui {
     /**
      * Greets users consistently in the console and graphical interfaces.
      */
-    public static final String WELCOME_MESSAGE = "Hello! I'm Sage.\nWhat can I do for you?";
+    public static final String WELCOME_MESSAGE = "Hello, I'm Sage.\nA little clarity, one step at a time.\n"
+            + "Try todo <task>, note <text>, or list.";
 
     /**
      * Reads console commands, or is null when this interface is configured for output only.
@@ -91,7 +92,7 @@ public class Ui {
      * Shows the farewell message.
      */
     public void showBye() {
-        output.accept("Bye. Hope to see you again soon!");
+        output.accept("Take care. One step at a time.");
     }
 
     /**
@@ -100,9 +101,14 @@ public class Ui {
      * @param tasks The tasks to display.
      */
     public void showTaskList(List<Task> tasks) {
-        output.accept("Here are the tasks in your list:");
+        if (tasks.isEmpty()) {
+            output.accept("A clear page. Add a task with todo <task> or a note with note <text>.");
+            output.accept(LINE);
+            return;
+        }
+        output.accept("Here's your list:");
         for (int i = 0; i < tasks.size(); i++) {
-            output.accept((i + 1) + "." + tasks.get(i));
+            output.accept((i + 1) + ". " + tasks.get(i));
         }
         output.accept(LINE);
     }
@@ -115,17 +121,17 @@ public class Ui {
      */
     public void showMatchingTasks(List<Task> tasks, List<Task> allTasks) {
         if (tasks.isEmpty()) {
-            output.accept("There are no matching tasks in your list.");
+            output.accept("No matches this time. Try another word from the description.");
             output.accept(LINE);
             return;
         }
 
-        output.accept("Here are the matching tasks in your list:");
+        output.accept("Here's what I found:");
         for (Task task : tasks) {
             int taskIndex = allTasks.indexOf(task);
             // Search results must refer to entries in the same list used by mutation commands.
             assert taskIndex >= 0 : "A matching task must belong to the complete task list";
-            output.accept((taskIndex + 1) + "." + task);
+            output.accept((taskIndex + 1) + ". " + task);
         }
         output.accept(LINE);
     }
@@ -138,13 +144,13 @@ public class Ui {
      */
     public void showAddedTask(Task task, int taskCount) {
         if (task instanceof Note) {
-            output.accept("Got it. I've saved this note:");
+            output.accept("Saved for later:");
             output.accept("  " + task);
             return;
         }
-        output.accept("Got it. I've added this task:");
+        output.accept("Noted. One less thing to remember:");
         output.accept("  " + task);
-        output.accept("Now you have " + taskCount + " tasks in the list.");
+        showItemCount(taskCount);
     }
 
     /**
@@ -155,13 +161,22 @@ public class Ui {
      */
     public void showRemovedTask(Task task, int taskCount) {
         if (task instanceof Note) {
-            output.accept("Noted. I've removed this note:");
+            output.accept("Note cleared:");
             output.accept("  " + task);
             return;
         }
-        output.accept("Noted. I've removed this task:");
+        output.accept("Cleared from your list:");
         output.accept("  " + task);
-        output.accept("Now you have " + taskCount + " tasks in the list.");
+        showItemCount(taskCount);
+    }
+
+    /**
+     * Counts tasks and notes together with the correct singular or plural form.
+     *
+     * @param itemCount The total number of entries in the list.
+     */
+    private void showItemCount(int itemCount) {
+        output.accept(itemCount + (itemCount == 1 ? " item" : " items") + " in your list.");
     }
 
     /**
@@ -170,7 +185,7 @@ public class Ui {
      * @param task The task that was marked as done.
      */
     public void showMarkedDone(Task task) {
-        output.accept("Nice! I've marked this task as done:");
+        output.accept("A little progress. Marked as done:");
         output.accept("  " + task);
     }
 
@@ -180,7 +195,7 @@ public class Ui {
      * @param task The task that was marked as not done.
      */
     public void showMarkedUndone(Task task) {
-        output.accept("OK, I've marked this task as not done yet:");
+        output.accept("Back on your list. Marked as not done:");
         output.accept("  " + task);
     }
 
@@ -190,7 +205,7 @@ public class Ui {
      * @param message The error details to display.
      */
     public void showError(String message) {
-        output.accept("OOPS!!! " + message);
+        output.accept("Let's try that again. " + message);
         output.accept(LINE);
     }
 }

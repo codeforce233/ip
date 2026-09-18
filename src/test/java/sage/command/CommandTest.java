@@ -35,7 +35,7 @@ class CommandTest {
 
         assertEquals(1, tasks.size());
         assertEquals("read chapter", tasks.get(0).getDescription());
-        assertTrue(output.contains("Got it. I've added this task:"));
+        assertTrue(output.contains("Noted. One less thing to remember:"));
     }
 
     @Test
@@ -55,7 +55,7 @@ class CommandTest {
         });
 
         assertEquals(0, tasks.size());
-        assertTrue(output.contains("Noted. I've removed this task:"));
+        assertTrue(output.contains("Cleared from your list:"));
     }
 
     @Test
@@ -73,7 +73,7 @@ class CommandTest {
             }
         });
         assertEquals("X", tasks.get(0).getStatusIcon());
-        assertTrue(markOutput.contains("Nice! I've marked this task as done:"));
+        assertTrue(markOutput.contains("A little progress. Marked as done:"));
 
         String unmarkOutput = captureOutput(() -> {
             try {
@@ -83,7 +83,7 @@ class CommandTest {
             }
         });
         assertEquals(" ", tasks.get(0).getStatusIcon());
-        assertTrue(unmarkOutput.contains("OK, I've marked this task as not done yet:"));
+        assertTrue(unmarkOutput.contains("Back on your list. Marked as not done:"));
     }
 
     @Test
@@ -96,8 +96,8 @@ class CommandTest {
         String listOutput = captureOutput(() -> new ListCommand().execute(tasks, ui, storage));
         String exitOutput = captureOutput(() -> new ExitCommand().execute(tasks, ui, storage));
 
-        assertTrue(listOutput.contains("Here are the tasks in your list:"));
-        assertTrue(exitOutput.contains("Bye. Hope to see you again soon!"));
+        assertTrue(listOutput.contains("Here's your list:"));
+        assertTrue(exitOutput.contains("Take care. One step at a time."));
         assertTrue(new ExitCommand().isExit());
     }
 
@@ -112,7 +112,7 @@ class CommandTest {
 
         String output = captureOutput(() -> new FindCommand("BOOK").execute(tasks, ui, storage));
 
-        assertTrue(output.contains("Here are the matching tasks in your list:"));
+        assertTrue(output.contains("Here's what I found:"));
         assertTrue(output.contains("read book"));
         assertTrue(output.contains("return book"));
         assertTrue(output.contains("write report") == false);

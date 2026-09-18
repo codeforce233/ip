@@ -18,7 +18,8 @@
             <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="header-bar">
                 <VBox minWidth="0.0" spacing="2.0" HBox.hgrow="ALWAYS">
                     <Label styleClass="app-title" text="Sage" />
-                    <Label styleClass="app-subtitle" text="Your task assistant" />
+                    <Label maxWidth="1.7976931348623157E308" minWidth="0.0" styleClass="app-subtitle"
+                           text="A little clarity, one step at a time." wrapText="true" />
                 </VBox>
                 <Button fx:id="helpButton"
                         accessibleText="Show command reference"

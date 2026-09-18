@@ -30,15 +30,15 @@ class SageTest {
         String listResponse = sage.getResponse("list");
 
         assertEquals(String.join(System.lineSeparator(),
-                "Got it. I've added this task:",
+                "Noted. One less thing to remember:",
                 "  [T][ ] read book",
-                "Now you have 1 tasks in the list."), addResponse);
+                "1 item in your list."), addResponse);
         assertEquals(String.join(System.lineSeparator(),
-                "Nice! I've marked this task as done:",
+                "A little progress. Marked as done:",
                 "  [T][X] read book"), markResponse);
         assertEquals(String.join(System.lineSeparator(),
-                "Here are the tasks in your list:",
-                "1.[T][X] read book"), listResponse);
+                "Here's your list:",
+                "1. [T][X] read book"), listResponse);
         assertFalse(addResponse.contains(Ui.LINE));
         assertFalse(markResponse.contains(Ui.LINE));
         assertFalse(listResponse.contains(Ui.LINE));
@@ -51,12 +51,13 @@ class SageTest {
 
         String errorResponse = sage.getResponse("mark 99");
 
-        assertEquals("OOPS!!! The task number is invalid. Use a number from the current list.", errorResponse);
+        assertEquals("Let's try that again. The task number is invalid. Use a number from the current list.",
+                errorResponse);
         assertFalse(errorResponse.contains(Ui.LINE));
         assertFalse(sage.isExit());
         assertEquals(String.join(System.lineSeparator(),
-                "Here are the tasks in your list:",
-                "1.[T][ ] read book"), sage.getResponse("list"));
+                "Here's your list:",
+                "1. [T][ ] read book"), sage.getResponse("list"));
     }
 
     @Test
@@ -69,8 +70,8 @@ class SageTest {
         Sage secondSession = new Sage(dataFile.toString());
 
         assertEquals(String.join(System.lineSeparator(),
-                "Here are the tasks in your list:",
-                "1.[T][X] submit report"), secondSession.getResponse("list"));
+                "Here's your list:",
+                "1. [T][X] submit report"), secondSession.getResponse("list"));
     }
 
     @Test
@@ -80,7 +81,7 @@ class SageTest {
 
         String byeResponse = sage.getResponse("bye");
 
-        assertEquals("Bye. Hope to see you again soon!", byeResponse);
+        assertEquals("Take care. One step at a time.", byeResponse);
         assertTrue(sage.isExit());
 
         sage.getResponse("list");
@@ -96,7 +97,7 @@ class SageTest {
 
         String response = sage.getResponse("not a command");
 
-        assertTrue(response.startsWith("OOPS!!! "));
+        assertTrue(response.startsWith("Let's try that again. "));
         assertFalse(sage.isExit());
     }
 
@@ -119,9 +120,9 @@ class SageTest {
         sage.getResponse("todo Read chapter");
         sage.getResponse("todo Write report");
 
-        assertTrue(sage.getResponse("find report").contains("2.[T][ ] Write report"));
+        assertTrue(sage.getResponse("find report").contains("2. [T][ ] Write report"));
         assertTrue(sage.getResponse("mark 2").contains("[T][X] Write report"));
-        assertTrue(sage.getResponse("list").contains("1.[T][ ] Read chapter"));
+        assertTrue(sage.getResponse("list").contains("1. [T][ ] Read chapter"));
     }
 
     @Test
@@ -166,7 +167,7 @@ class SageTest {
 
             String output = captured.toString(StandardCharsets.UTF_8);
             assertTrue(output.contains("Sage"));
-            assertFalse(output.contains("OOPS!!!"));
+            assertFalse(output.contains("Let's try that again."));
         } finally {
             System.setIn(originalIn);
             System.setOut(originalOut);

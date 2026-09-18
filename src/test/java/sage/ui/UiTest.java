@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -35,33 +36,45 @@ class UiTest {
         Task task = new Task("watch lecture", TaskType.TODO);
 
         String welcomeOutput = captureOutput(ui::showWelcome);
-        assertTrue(welcomeOutput.contains("Hello! I'm Sage."));
+        assertTrue(welcomeOutput.contains("Hello, I'm Sage."));
 
         String listOutput = captureOutput(() -> ui.showTaskList(List.of(task)));
-        assertTrue(listOutput.contains("Here are the tasks in your list:"));
+        assertTrue(listOutput.contains("Here's your list:"));
         assertTrue(listOutput.contains("watch lecture"));
 
         String matchedOutput = captureOutput(() -> ui.showMatchingTasks(List.of(task), List.of(task)));
-        assertTrue(matchedOutput.contains("Here are the matching tasks in your list:"));
+        assertTrue(matchedOutput.contains("Here's what I found:"));
         assertTrue(matchedOutput.contains("watch lecture"));
 
         String addedOutput = captureOutput(() -> ui.showAddedTask(task, 1));
-        assertTrue(addedOutput.contains("Got it. I've added this task:"));
+        assertTrue(addedOutput.contains("Noted. One less thing to remember:"));
 
         String removedOutput = captureOutput(() -> ui.showRemovedTask(task, 0));
-        assertTrue(removedOutput.contains("Noted. I've removed this task:"));
+        assertTrue(removedOutput.contains("Cleared from your list:"));
 
         String markedOutput = captureOutput(() -> ui.showMarkedDone(task));
-        assertTrue(markedOutput.contains("Nice! I've marked this task as done:"));
+        assertTrue(markedOutput.contains("A little progress. Marked as done:"));
 
         String unmarkedOutput = captureOutput(() -> ui.showMarkedUndone(task));
-        assertTrue(unmarkedOutput.contains("OK, I've marked this task as not done yet:"));
+        assertTrue(unmarkedOutput.contains("Back on your list. Marked as not done:"));
 
         String errorOutput = captureOutput(() -> ui.showError("bad input"));
-        assertTrue(errorOutput.contains("OOPS!!! bad input"));
+        assertTrue(errorOutput.contains("Let's try that again. bad input"));
 
         String byeOutput = captureOutput(ui::showBye);
-        assertTrue(byeOutput.contains("Bye. Hope to see you again soon!"));
+        assertTrue(byeOutput.contains("Take care. One step at a time."));
+    }
+
+    @Test
+    void displayMethods_emptyLists_offerPracticalNextSteps() {
+        List<String> output = new ArrayList<>();
+        Ui ui = new Ui(output::add);
+
+        ui.showTaskList(List.of());
+        ui.showMatchingTasks(List.of(), List.of());
+
+        assertEquals(List.of("A clear page. Add a task with todo <task> or a note with note <text>.", Ui.LINE,
+                "No matches this time. Try another word from the description.", Ui.LINE), output);
     }
 
     private String captureOutput(Runnable action) {
