@@ -29,7 +29,7 @@ jobs:
             macArchitecture: x64
           - platform: macos-15
             macArm64: 'true'
-            jar: sage-mac-arm64.jar
+            jar: sage.jar
             macArchitecture: arm64
     runs-on: ${{ matrix.platform }}
 

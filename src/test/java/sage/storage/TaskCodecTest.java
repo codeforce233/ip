@@ -18,6 +18,17 @@ import sage.task.Todo;
 
 class TaskCodecTest {
     @Test
+    void parse_invalidSavedDateValues_rejectsEveryTimeField() {
+        for (String value : List.of("12345", "0000-01-01", "25pm", "???")) {
+            for (String record : List.of("D | 0 | report | " + value,
+                    "E | 0 | meeting | " + value + " | Sunday",
+                    "E | 0 | meeting | Sunday | " + value)) {
+                assertThrows(IllegalArgumentException.class, () -> TaskCodec.parse(record), record);
+            }
+        }
+    }
+
+    @Test
     void serialize_allTaskTypes_preservesExactRecordFormat() {
         Todo todo = new Todo("read book");
         todo.markAsDone();

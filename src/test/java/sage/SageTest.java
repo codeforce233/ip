@@ -11,6 +11,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -20,6 +21,41 @@ import sage.ui.Ui;
 class SageTest {
     @TempDir
     Path tempDir;
+
+    @Test
+    void getResponse_invalidDates_preservesSavedDataAndRecoversAfterCorrection() throws Exception {
+        Path dataFile = tempDir.resolve("tasks.txt");
+        Sage sage = new Sage(dataFile.toString());
+        sage.getResponse("todo Keep this task");
+        String originalData = Files.readString(dataFile);
+
+        for (String input : List.of("deadline report /by 12345", "deadline report /by 0000-01-01",
+                "event meeting /from Monday /to 25pm")) {
+            assertTrue(sage.getResponse(input).contains("That date or time is invalid."), input);
+            assertTrue(sage.hasError(), input);
+            assertEquals(originalData, Files.readString(dataFile), input);
+        }
+
+        sage.getResponse("deadline report /by 2028-02-29");
+        assertFalse(sage.hasError());
+        Sage restarted = new Sage(dataFile.toString());
+        assertEquals("", restarted.getStartupMessage());
+        assertEquals(String.join(System.lineSeparator(), "Here's your list:",
+                "1. [T][ ] Keep this task", "2. [D][ ] report (by: Feb 29 2028)"), restarted.getResponse("list"));
+    }
+
+    @Test
+    void getResponse_invalidSavedDate_protectsFileFromReplacement() throws Exception {
+        Path dataFile = tempDir.resolve("tasks.txt");
+        String originalData = "T | 0 | Keep this task\nD | 0 | report | 12345\n";
+        Files.writeString(dataFile, originalData);
+        Sage sage = new Sage(dataFile.toString());
+
+        assertTrue(sage.getStartupMessage().contains("I couldn't read the saved data."));
+        sage.getResponse("todo replacement");
+        assertTrue(sage.hasError());
+        assertEquals(originalData, Files.readString(dataFile));
+    }
 
     @Test
     void getResponse_multipleCommandsPreserveStateAndHideConsoleSeparators() {

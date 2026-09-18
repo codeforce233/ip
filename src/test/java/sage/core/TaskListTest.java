@@ -18,6 +18,18 @@ import sage.task.Todo;
 
 class TaskListTest {
     @Test
+    void find_repeatedWhitespace_matchesPhrasesWithoutChangingStoredDescriptions() {
+        Task first = new Todo("Read   the\tbook");
+        Task second = new Note("Return the book tomorrow");
+        TaskList tasks = new TaskList(List.of(first, new Todo("Read another book"), second));
+
+        assertEquals(List.of(first, second), tasks.find("  THE \t book  "));
+        assertEquals(List.of(first), tasks.find("read the book"));
+        assertEquals("Read   the\tbook", tasks.get(0).getDescription());
+        assertEquals(List.of(), tasks.find("\u2003"));
+    }
+
+    @Test
     void find_matches_preservesOrderDuplicatesAndIndependentList() {
         Task first = new Task("read book", TaskType.TODO);
         Task second = new Task("return BOOK", TaskType.TODO);

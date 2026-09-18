@@ -30,6 +30,19 @@ class ParserTest {
     Path tempDir;
 
     @Test
+    void parse_invalidDateValues_rejectsEveryTimeField() {
+        for (String value : List.of("12345", "25:00", "???", "0000-01-01", "25pm")) {
+            for (String input : List.of("deadline report /by " + value,
+                    "event meeting /from " + value + " /to Sunday",
+                    "event meeting /from Sunday /to " + value)) {
+                SageException error = assertThrows(SageException.class, () -> Parser.parse(input), input);
+                assertTrue(error.getMessage().contains("That date or time is invalid."), input);
+                assertInstanceOf(IllegalArgumentException.class, error.getCause());
+            }
+        }
+    }
+
+    @Test
     void parse_missingOrInvalidTaskNumbers_preservesErrorMessages() {
         for (String commandWord : List.of("mark", "unmark", "delete")) {
             SageException missing = assertThrows(SageException.class, () -> Parser.parse(commandWord + " "));

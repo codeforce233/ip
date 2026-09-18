@@ -225,7 +225,7 @@ public class Parser {
         try {
             TaskDateTime.validate(value);
         } catch (IllegalArgumentException exception) {
-            throw new SageException(exception.getMessage());
+            throw new SageException(exception.getMessage(), exception);
         }
     }
 

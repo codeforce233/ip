@@ -167,20 +167,20 @@ public class TaskList {
     }
 
     /**
-     * Returns tasks whose descriptions contain the given keyword, ignoring case.
+     * Returns tasks whose descriptions contain the given phrase, ignoring case and repeated whitespace.
      * A null or blank keyword produces an empty result.
      *
      * @param keyword The keyword to find in task descriptions.
      * @return A new mutable list containing the matching tasks in their original order.
      */
     public List<Task> find(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
+        if (keyword == null || keyword.isBlank()) {
             return new ArrayList<>();
         }
 
-        String normalizedKeyword = keyword.trim().toLowerCase(Locale.ROOT);
+        String normalizedKeyword = normalize(keyword);
         return tasks.stream()
-                .filter(task -> task.getDescription().toLowerCase(Locale.ROOT).contains(normalizedKeyword))
+                .filter(task -> normalize(task.getDescription()).contains(normalizedKeyword))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 }

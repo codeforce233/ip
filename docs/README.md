@@ -43,8 +43,8 @@ Choose a Sage build that matches your computer and Java runtime:
 | Windows x64, Linux x64, or Intel Mac | Build with Intel macOS libraries (`macArm64=false`) |
 | Apple Silicon Mac with ARM64 Java | Build with Apple Silicon libraries (`macArm64=true`) |
 
-The committed build produces `sage.jar` for the Intel macOS variant and `sage-mac-arm64.jar` for
-the ARM64 macOS variant. Check the release description if a supplier has renamed the file.
+Both variants produce `sage.jar`. Check the release description for the bundled macOS architecture;
+the filename alone does not identify it.
 32-bit Java, ARM Windows, and ARM Linux are not supported release targets.
 
 ### 2. Obtain and launch Sage
@@ -61,7 +61,7 @@ If a release is not available, obtain a build from the project maintainer.
    ```
 
 Keep launching Sage from this same folder so it can find your saved list.
-If you downloaded `sage-mac-arm64.jar`, substitute that filename in the launch command.
+If the supplier renamed the JAR, substitute its actual filename in the launch command.
 The JAR includes JavaFX dependencies; you do not need the source code or an IDE to run it.
 Java itself must still be installed.
 
@@ -210,7 +210,8 @@ find report
 
 Search matches text inside task descriptions and notes, ignoring letter case.
 For example, `find REPORT` also matches `Submit project report`.
-A multiword phrase is matched as a phrase, not as separate search terms.
+A multiword phrase is matched as a phrase, not as separate search terms. Repeated spaces and tabs
+are treated as a single space in both the search phrase and the saved description.
 The search does not match an entry solely by its date or completion marker.
 
 Search results retain their **original list numbers**. If the report is entry 2, it remains
@@ -258,7 +259,9 @@ Use a real calendar date and, optionally, a 24-hour time:
 | Either date format followed by `HH:mm` | `1/10/2026 18:00` |
 
 Spaces or tabs between a numeric date and its time are accepted. Impossible numeric dates such
-as `2026-02-30`, and invalid times such as `25:00`, are rejected instead of silently adjusted.
+as `2026-02-30`, and invalid times such as `25:00` or `25pm`, are rejected instead of silently adjusted.
+Years must be between `0001` and `9999`. Bare numbers such as `12345` or `20261001` and punctuation-only
+values such as `???` are rejected: use a complete date in one of the formats above.
 Dates without a time are interpreted as midnight. Midnight is displayed without a time label.
 Dates are displayed in English regardless of the operating system's language.
 
